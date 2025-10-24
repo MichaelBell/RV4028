@@ -1,0 +1,7 @@
+femtorv/sim_build/*
+femtorv/__pycache__/*
+*.ys
+*.asc
+*.bit
+*.log
+results.xml

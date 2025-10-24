@@ -16,11 +16,7 @@ Modules are attached by an 80-pin dual row header, similar to RC2014 modules but
 
 The pinout of the first row is chosen such that RC2014 modules might be compatible, if 3v3 capable components are used.  This also means that modules not requiring access to the full bus can be single row.
 
-## Software
-
-The intention is to be able to run standard RV32I programs with a C SDK.  A Micropython port and Rust support are likely.
-
-It is currently not a goal to support either real time operating systems (although this may be possible in future), or Linux (which would likely not be possible without moving to a larger FPGA).
+![Bus connector](BusConn.png)
 
 ### Bus cycle details
 
@@ -31,6 +27,12 @@ All writes complete in a single cycle.
 Reads normally complete in two cycles, but a wait pin may be asserted to extend the read cycle.
 
 TODO: Add diagrams.
+
+## Software
+
+The intention is to be able to run standard RV32I programs with a C SDK.  A Micropython port and Rust support are likely.
+
+It is currently not a goal to support either real time operating systems (although this may be possible in future), or Linux (which would likely not be possible without moving to a larger FPGA).
 
 # Initial modules
 

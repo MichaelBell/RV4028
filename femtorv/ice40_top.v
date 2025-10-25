@@ -3,6 +3,8 @@
    
    Top module for ICE40 */
 
+`default_nettype none
+
 module ice40_top(
     input clk,
     input rst_n,
@@ -13,12 +15,18 @@ module ice40_top(
     output        rd_n,   // Read request
     output  [1:0] msk_n,  // Read/Write mask, low for bytes to be written
     output        iorq_n, // Asserted if the top bit of the address is set
-    output        mreq_n, // Asserted during bus transactions
+    output        req_n,  // Asserted during bus transactions
     input         wait_n, // Read not ready
     
     input         int_n,  // Interrupt - currently not supported
 
     inout  [15:0] data,
+
+    output        lo_addr_n,  // Asserted if addr[31:24] is 0
+    input   [5:0] spare,
+    input         clk2,
+    input         rst2,
+    output        led
 );
 
     wire [15:0] data_out;
@@ -61,12 +69,15 @@ module ice40_top(
 		.PIN_TYPE(6'b 0100_01),  // DDR output
 		.PULLUP(1'b 0)
     ) io_mreq_n (
-		.PACKAGE_PIN(mreq_n),
+		.PACKAGE_PIN(req_n),
         .OUTPUT_CLK(clk),
         .INPUT_CLK(clk),
 		.OUTPUT_ENABLE(1'b1),
 		.D_OUT_0(mreq_to_buffer[0]),
         .D_OUT_1(mreq_to_buffer[1])
 	);
+
+    assign led = !rd_n;
+    assign lo_addr_n = |addr[31:24];
 
 endmodule

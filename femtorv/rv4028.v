@@ -3,6 +3,8 @@
    
    Top module for RV4028 CPU */
 
+`default_nettype none
+
 module RV4028_femtorv(
     input clk,
     input rst_n,

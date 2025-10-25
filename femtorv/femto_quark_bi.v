@@ -28,6 +28,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*******************************************************************/
 
+`default_nettype none
+
 // Firmware generation flags for this processor
 `define NRV_ARCH     "rv32i"
 `define NRV_ABI      "ilp32"

@@ -85,6 +85,8 @@ MREQ is intended to be wired to the (P)SRAM CE, so must be pulsed regularly even
 
 IORQ is not required as the address space is sufficiently large.  It is simply set to ~A31.
 
+LO_ADDR indicates if the address is in the bottom 16MB of the address space, to reduce the amount of address checking logic required on low addressed modules.
+
 ![Read timing diagram](wavedrom/read_txn.png)
 
 ![Write timing diagram](wavedrom/write_txn.png)

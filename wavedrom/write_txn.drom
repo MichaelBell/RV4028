@@ -1,0 +1,13 @@
+{signal: [
+  {name: 'clk', wave:      'P.....', period: 2},
+  {name: 'address', wave:  'x.=...=...x.', data: ['Addr', 'Addr+2']},
+  {name: 'data', wave:     'x...=.x.=.x.', data: ['Data[1:0]', 'Data[3:2]']},
+  {name: 'mreq', wave:     '1.0..10..1..'},
+  {name: 'wr', wave:       '1..0.1.0.1..'},
+  {name: 'msk0', wave:     '1.=...=...1.', data: ['Write byte 0', 'Write byte 2']},
+  {name: 'msk1', wave:     '1.=...=...1.', data: ['Write byte 1', 'Write byte 3']}
+],
+  head:{
+  text:'RV4028 Write cycle',
+  tick:-2
+  }}

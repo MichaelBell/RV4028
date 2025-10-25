@@ -1,0 +1,15 @@
+{signal: [
+  {name: 'clk', wave:      'P..........', period: 2},
+  {name: 'address', wave:  'x.=...=...=.....=...=.', data: ['PC', 'PC+2', 'Addr', 'Addr+2', 'PC+4']},
+  {name: 'data', wave:     'z......x..=..z.x..=..z.x......=..z.x..=..z.x', data: ['I[1:0]', 'I[3:2]', 'D[1:0]', 'D[3:2]'], period:0.5},
+  {name: 'mreq', wave:     '1..0..10..10....10..10'},
+  {name: 'rd', wave:       '1.0.................0.'},
+  {name: 'wait', wave:     '1............0.1......'},  
+  {name: 'msk0', wave:     '0.........=.....=...0.', data: ['Read byte 0', 'Read byte 2']},
+  {name: 'msk1', wave:     '0.........=.....=...0.', data: ['Read byte 1', 'Read byte 3']},
+  {},
+],
+  head:{
+  text:'RV4028 Load instruction',
+  tick:-2
+  }}

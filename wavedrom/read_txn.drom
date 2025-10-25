@@ -1,0 +1,13 @@
+{signal: [
+  {name: 'clk', wave:      'P.....', period: 2},
+  {name: 'address', wave:  'x.=...=...x.', data: ['Addr1', 'Addr2']},
+  {name: 'data', wave:     'x....=x..=x.', data: ['Data', 'Data'], phase:-0.2},
+  {name: 'mreq', wave:     '1..0..10..1.'},
+  {name: 'rd', wave:       '1.0...0...1.'},
+  {name: 'msk0', wave:     '1.0...0...1.'},
+  {name: 'msk1', wave:     '1.0...0...1.'}
+],
+  head:{
+  text:'RV4028 Read cycle',
+  tick:-2
+  }}

@@ -1,0 +1,14 @@
+{signal: [
+  {name: 'clk', wave:      'P.........', period: 2},
+  {name: 'address', wave:  'x.=...=...=...=...=.', data: ['PC', 'PC+2', 'Addr', 'Addr+2', 'PC+4']},
+  {name: 'data', wave:     'z......x..=..z.x..=..z..=...z...=...z..x', data: ['I[1:0]', 'I[3:2]', 'Data[1:0]', 'Data[3:2]'], period:0.5},
+  {name: 'mreq', wave:     '1..0..10.....10..1.0'},
+  {name: 'rd', wave:       '1.0.......1.......0.'},
+  {name: 'wr', wave:       '1..........0.1.0.1..'},
+  {name: 'msk0', wave:     '0.........=...=...0.', data: ['Write byte 0', 'Write byte 2']},
+  {name: 'msk1', wave:     '0.........=...=...0.', data: ['Write byte 1', 'Write byte 3']}
+],
+  head:{
+  text:'RV4028 Store instruction',
+  tick:-2
+  }}

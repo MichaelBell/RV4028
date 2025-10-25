@@ -1,8 +1,8 @@
 TARGET = femtorv
-TOP = RV4028_femtorv
+TOP = ice40_top
 PROG ?= hello
 
-OBJS += top.v femto_quark_bi.v
+OBJS += ice40_top.v rv4028.v femto_quark_bi.v
 
 all: ${TARGET}.bit
 

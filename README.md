@@ -16,17 +16,7 @@ Modules are attached by an 80-pin dual row header, similar to RC2014 modules but
 
 The pinout of the first row is chosen such that RC2014 modules might be compatible, if 3v3 capable components are used.  This also means that modules not requiring access to the full bus can be single row.
 
-![Bus connector](BusConn.png)
-
-### Bus cycle details
-
-Addresses are always 16-bit aligned and a byte mask is used for single byte stores.
-
-All writes complete in a single cycle.
-
-Reads normally complete in two cycles, but a wait pin may be asserted to extend the read cycle.
-
-TODO: Add diagrams.
+[![Bus connector](BusConnSmaller.png)](BusConn.png)
 
 ## Software
 
@@ -57,7 +47,7 @@ ROM might not be required - we can embed a small amount of ROM (6kB) in the CPU 
 ## IO
 
 An [RP2350B](https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf) is used for IO.  The board should include:
-- A UART
+- Two UARTs
 - Two I2C broken out to Qw/ST compatible ports
 - A micro SD card socket
 - An SPI with a couple of chip selects (this should be made easy to connect to the CPU for updating the gateware)
@@ -65,4 +55,54 @@ An [RP2350B](https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf) is 
 
 8 bits of address should easily be sufficient, and 8 bits of data should also be fine, which allows this to be single row.
 
-If we also wired clock and reset from the RP2350 then no it could provide a clock, meaning a separate clock module would not be required.
+I'm tempted to put USB on a couple of the spare backplane pins, so a single USB connection can power the system and be used to communicate with the RP2350.
+
+If we also wired clock and reset from the RP2350 then it could provide a clock, meaning a separate clock module would not be required.
+
+## Clock
+
+As above, a clock module likely won't be required, but it is a nice educational addition, and would allow the machine to be used without the RP2350 based IO module.
+
+A 14.7456MHz crystal would seem appropriate - double the clock rate of the RC2014.  Assuming IS66WVE PSRAM is used, the maximum reliable clock rate of the system should be around 17-18MHz.
+
+An [SN74LVC1GX04](https://www.lcsc.com/datasheet/C2653063.pdf) could be used to drive the crystal.
+
+## Backplane
+
+USB-C socket, with data wired to spare pins for RP2350.
+
+AP2112K for 3.3V supply.
+
+Decoupling caps, LED, reset button.
+
+# Bus timing
+
+Addresses are always 16-bit aligned and a byte mask is used for single byte stores.
+
+All writes complete in a two cycles.  Reads normally complete in two cycles, but wait may be asserted to extend the read cycle.
+
+MREQ is intended to be wired to the (P)SRAM CE, so must be pulsed regularly even if reads are continuous in order to avoid exceeding max CE assertion time on PSRAM.  This is acheived by pulsing it high in the first half clock of each read cycle.  MREQ remains low at the start of a write cycle in order to support a faster clock speed when used with a IS66WVE.
+
+IORQ is not required as the address space is sufficiently large.  It is simply set to ~A31.
+
+![Read timing diagram](wavedrom/read_txn.png)
+
+![Write timing diagram](wavedrom/write_txn.png)
+
+![Full store instruction](wavedrom/store_instr.png)
+
+![Full load instruction](wavedrom/load_instr.png)
+
+## Expected RAM implementation
+
+RAM access is controlled by CE, OE, WE and byte selects.
+
+* Address high bits are compared for the chip, CE is never asserted if the address doesn't match
+* CE is MREQ
+* WE is WR
+* OE is RD
+* Byte selects are MSK.
+
+Writes are latched by deasserting WE and CE.  So a full store instruction that read the instruction and wrote data back to the same RAM chip would look like:
+
+![Full store instruction to RAM](wavedrom/store_instr_ram.png)

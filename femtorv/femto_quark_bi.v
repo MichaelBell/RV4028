@@ -38,10 +38,13 @@ module FemtoRV32(
 
    output [31:0] mem_addr,  // address bus
    output [31:0] mem_wdata, // data to be written
-   output  [3:0] mem_wmask, // write mask for the 4 bytes of each word
+   output        mem_wnext, // active to when next cycle will initiate a write
+   output        mem_wstrb, // active to initiate a memory write
+   output  [3:0] mem_mask,  // read/write mask for the 4 bytes of each word
+   output        mem_half,  // active for 8 or 16-bit read/writes
+
    input  [31:0] mem_rdata, // input lines for both data and instr
-   output        mem_rstrb, // active to initiate memory read (used by IO)
-   output        mem_rlo,   // active to indicate low 16 or 8 bit read
+   output        mem_rstrb, // active to initiate memory read
    input         mem_rbusy, // asserted if memory is busy reading value
    input         mem_wbusy, // asserted if memory is busy writing value
 
@@ -90,6 +93,7 @@ module FemtoRV32(
    wire isSYSTEM  =  (instr[6:2] == 5'b11100); // rd <- cycles
 
    wire isALU = isALUimm | isALUreg;
+   wire isMem = isLoad | isStore;
 
    /***************************************************************************/
    // The register file.
@@ -271,14 +275,14 @@ module FemtoRV32(
    assign mem_wdata[31:24] = loadstore_addr[0] ? rs2[7:0]  :
 			     loadstore_addr[1] ? rs2[15:8] : rs2[31:24];
 
-   // The memory write mask:
+   // The memory mask:
    //    1111                     if writing a word
    //    0011 or 1100             if writing a halfword
    //                                (depending on loadstore_addr[1])
    //    0001, 0010, 0100 or 1000 if writing a byte
    //                                (depending on loadstore_addr[1:0])
 
-   wire [3:0] STORE_wmask =
+   wire [3:0] loadstore_mask =
 	      mem_byteAccess      ?
 	            (loadstore_addr[1] ?
 		          (loadstore_addr[0] ? 4'b1000 : 4'b0100) :
@@ -313,12 +317,16 @@ module FemtoRV32(
    wire writeBack = ~(isBranch | isStore ) &
                     (state[EXECUTE_bit] | state[WAIT_ALU_OR_MEM_bit]);
 
-   // The memory-read signal.
+   // The memory transaction activate signals.
    assign mem_rstrb = state[EXECUTE_bit] & ~isStore | state[FETCH_INSTR_bit];
-   assign mem_rlo = isLoad & !instr[13];
+   assign mem_wstrb = state[EXECUTE_bit] & isStore;
 
-   // The mask for memory-write.
-   assign mem_wmask = {4{(state[EXECUTE_bit] | state[WAIT_ALU_OR_MEM_bit]) & isStore}} & STORE_wmask;
+   // The mask for memory.
+   assign mem_mask = ((state[EXECUTE_bit] | state[WAIT_ALU_OR_MEM_bit]) && isMem) ? loadstore_mask : 4'b1111;
+   assign mem_half = isMem & !instr[13];
+
+   // Write on next cycle.
+   assign mem_wnext = state[WAIT_INSTR_bit] & !mem_rbusy & (mem_rdata[6:2] == 5'b01000);
 
    wire jumpToPCplusImm = isJAL | isJALR | (isBranch & predicate);
 `ifdef NRV_IS_IO_ADDR

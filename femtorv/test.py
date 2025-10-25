@@ -19,46 +19,142 @@ async def reset(dut):
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
     assert dut.wr_n.value == 1
-    assert dut.wrm_n.value == 0b11
     assert dut.rd_n.value == 1
+    assert dut.mreq_n.value == 1
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 1, False)
+    await ClockCycles(dut.clk, 1)
+    await Timer(1, "ns")
 
-async def send_instr(dut, data):
-    for i in range(2):
-        assert dut.wr_n.value == 1
-        assert dut.wrm_n.value == 0b11
-        if dut.rd_n.value == 0: break
-        await ClockCycles(dut.clk, 1, False)
-
+async def expect_read(dut, data, addr=None):
     assert dut.wr_n.value == 1
-    assert dut.wrm_n.value == 0b11
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 0
+    
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
     assert dut.rd_n.value == 0
 
-    addr = dut.addr.value.to_unsigned()
+    if addr is None:
+        addr = dut.addr.value.to_unsigned()
+    else:
+        assert dut.addr.value == addr
 
     await ClockCycles(dut.clk, 1, False)
     assert dut.wr_n.value == 1
-    assert dut.wrm_n.value == 0b11
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
     assert dut.rd_n.value == 0
 
-    dut.data.value = data & 0xffff
+    dut.data_in.value = data & 0xffff
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 0
+    dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
 
     await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
     assert dut.wr_n.value == 1
-    assert dut.wrm_n.value == 0b11
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
     assert dut.rd_n.value == 0
     assert dut.addr.value == addr + 2
 
     await ClockCycles(dut.clk, 1, False)
     assert dut.wr_n.value == 1
-    assert dut.wrm_n.value == 0b11
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
     assert dut.rd_n.value == 0
 
-    dut.data.value = data >> 16
+    dut.data_in.value = data >> 16
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
+
+async def send_instr(dut, data):
+    await expect_read(dut, data)
+
+async def expect_write(dut, data, addr):
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr
+    assert dut.data_oe.value == 0
 
     await ClockCycles(dut.clk, 1, False)
-    dut.data.value = LogicArray("ZZZZZZZZZZZZZZZZ")
+    await Timer(1, "ns")
+
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr
+    assert dut.data_oe.value == 0
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    assert dut.data_out.value == data & 0xffff
+
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    assert dut.data_out.value == data & 0xffff
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr + 2
+    assert dut.data_oe.value == 0
+
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr + 2
+    assert dut.data_oe.value == 0
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == 0b00
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    assert dut.data_out.value == data >> 16
+
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    assert dut.data_out.value == data >> 16
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.data_oe.value == 0
+
 
 @cocotb.test()
 async def test_start(dut):
@@ -74,3 +170,12 @@ async def test_start(dut):
     for i in range(8):
         await send_instr(dut, InstructionADDI(i+8, x0, 0x102*i).encode())
 
+    # Store a value
+    await send_instr(dut, InstructionSW(x0, 9, 0x234).encode())
+    await expect_write(dut, 0x102, 0x234)
+
+    # Load a value and store it again
+    await send_instr(dut, InstructionLW(16, x0, 0x334).encode())
+    await expect_read(dut, 0x12345678, 0x334)
+    await send_instr(dut, InstructionSW(x0, 16, 0x334).encode())
+    await expect_write(dut, 0x12345678, 0x334)

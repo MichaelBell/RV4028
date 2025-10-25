@@ -38,8 +38,8 @@ set_io addr[0] 56
 
 set_io wr_n   53
 set_io rd_n   52
-set_io wrm_n[0] 51
-set_io wrm_n[1] 40
+set_io msk_n[0] 51
+set_io msk_n[1] 40
 set_io iorq_n 37
 set_io mreq_n 36
 set_io wait_n 33
@@ -63,4 +63,4 @@ set_io data[13] 10
 set_io data[14] 9
 set_io data[15] 8
 
-set_frequency clk 25
+set_frequency clk 20

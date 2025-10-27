@@ -19,6 +19,8 @@ module RV4028_femtorv(
     input         wait_n, // Read not ready
     
     input         int_n,  // Interrupt - currently not supported
+    input         busrq_n,  // Request bus release - todo
+    output        busack_n, // Allow bus release - todo
 
     input  [15:0] data_in,
     output [15:0] data_out,
@@ -114,5 +116,7 @@ module RV4028_femtorv(
                          femto_wnext || femto_wstrb || (write_in_progress && !write_finishing));
     assign mreq_n[1] = !(femto_rstrb || read_in_progress || 
                          femto_wstrb || (write_cycle == 2'b10));
+
+    assign busack_n = 1'b1;
 
 endmodule

@@ -28,9 +28,13 @@ It is currently not a goal to support either real time operating systems (althou
 
 ## CPU
 
+![CPU Module render](cpu/CPU.png)
+
 Keeping things minimal and simple, we use a Bruno Levy's [FemtoRV](https://github.com/BrunoLevy/learn-fpga/tree/master/FemtoRV) Quark (RV32I) core with some small modifications, and a wrapper to handle breaking each 32-bit data access into 16-bit accesses.  This is the most minimal Risc-V instruction set and can fit in a small FPGA, so we use an ICE40 [HX1K](https://www.latticesemi.com/ice40), which is available in a 100-pin QFP.
 
 A small flash is required for the FPGA configuration, a header will be provided that will allow the FPGA to be held in reset and the flash programmed.  Although it is significantly larger than required, using a 1MB [W25Q80DV](https://www.lcsc.com/datasheet/C14086.pdf) seems cost effective. 
+
+[Schematic](cpu/cpu.pdf)
 
 ## RAM
 

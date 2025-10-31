@@ -9,7 +9,7 @@ module ice40_top(
     input clk,
     input rst_n,
 
-    output [31:0] addr,   // Note low bit is always 0, addresses are 16-bit aligned.
+    inout [31:0] addr,   // Note low bit is always 0, addresses are 16-bit aligned.
 
     output        wr_n,   // Write request
     output        rd_n,   // Read request
@@ -19,16 +19,19 @@ module ice40_top(
     input         wait_n, // Read not ready
     
     input         int_n,  // Interrupt - currently not supported
+    input         busrq_n,  // Request bus release
+    output        busack_n, // Allow bus release
 
     inout  [15:0] data,
 
-    output        lo_addr_n,  // Asserted if addr[31:24] is 0
-    input   [5:0] spare,
+    inout         lo_addr_n,  // Asserted if addr[31:24] is 0
+    input   [2:0] spare,
     input         clk2,
     input         rst2,
     output        led
 );
 
+    wire [31:0] addr_out;
     wire [15:0] data_out;
     wire data_oe;
 
@@ -38,7 +41,7 @@ module ice40_top(
     RV4028_femtorv i_rv4028(
         .clk(clk),
         .rst_n(rst_n),
-        .addr(addr),
+        .addr(addr_out),
         .wr_n(wr_to_buffer),
         .rd_n(rd_n),
         .msk_n(msk_n),
@@ -46,12 +49,15 @@ module ice40_top(
         .mreq_n(mreq_to_buffer),
         .wait_n(wait_n),
         .int_n(int_n),
+        .busrq_n(busrq_n),
+        .busack_n(busack_n),
         .data_in(data),
         .data_out(data_out),
         .data_oe(data_oe)
     );
 
     assign data = data_oe ? data_out : 16'bz;
+    assign addr = busack_n ? addr_out : 32'bz;
 
     SB_IO #(
 		.PIN_TYPE(6'b 0100_01),  // DDR output
@@ -78,6 +84,6 @@ module ice40_top(
 	);
 
     assign led = !rd_n;
-    assign lo_addr_n = |addr[31:24];
+    assign lo_addr_n = busack_n ? |addr_out[31:24] : 1'bz;
 
 endmodule

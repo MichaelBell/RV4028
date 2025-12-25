@@ -8,12 +8,13 @@ from cocotb.types import LogicArray
 
 from riscvmodel.insn import *
 
-from riscvmodel.regnames import x0, x1, sp, gp, tp, a0, a1, a2, a3, a4
+from riscvmodel.regnames import x0, x1, sp, gp, tp, a0, a1, a2, a3, a4, x9, x16
 from riscvmodel import csrnames
-from riscvmodel.variant import RV32E
+from riscvmodel.variant import RV32I
 
 async def reset(dut):
     dut.wait_n.value = 1
+    dut.busrq_n.value = 1
     dut.rst_n.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst_n.value = 0
@@ -22,8 +23,9 @@ async def reset(dut):
     assert dut.rd_n.value == 1
     assert dut.mreq_n.value == 1
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 1)
-    await Timer(1, "ns")
+    while dut.rd_n.value == 1:
+        await ClockCycles(dut.clk, 1)
+        await Timer(1, "ns")
 
 async def expect_read(dut, data, addr=None):
     assert dut.wr_n.value == 1
@@ -170,12 +172,14 @@ async def test_start(dut):
     for i in range(8):
         await send_instr(dut, InstructionADDI(i+8, x0, 0x102*i).encode())
 
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode())
+
     # Store a value
-    await send_instr(dut, InstructionSW(x0, 9, 0x234).encode())
-    await expect_write(dut, 0x102, 0x234)
+    await send_instr(dut, InstructionSW(gp, x9, 0x234).encode())
+    await expect_write(dut, 0x102, 0x400234)
 
     # Load a value and store it again
-    await send_instr(dut, InstructionLW(16, x0, 0x334).encode())
-    await expect_read(dut, 0x12345678, 0x334)
-    await send_instr(dut, InstructionSW(x0, 16, 0x334).encode())
-    await expect_write(dut, 0x12345678, 0x334)
+    await send_instr(dut, InstructionLW(x16, gp, 0x334).encode())
+    await expect_read(dut, 0x12345678, 0x400334)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x12345678, 0x400334)

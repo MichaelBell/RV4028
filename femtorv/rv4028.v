@@ -20,7 +20,7 @@ module RV4028_femtorv(
     
     input         int_n,  // Interrupt - currently not supported
     input         busrq_n,  // Request bus release - todo
-    output        busack_n, // Allow bus release - todo
+    output reg    busack_n, // Allow bus release - todo
 
     input  [15:0] data_in,
     output [15:0] data_out,
@@ -54,16 +54,19 @@ module RV4028_femtorv(
     );
 
     reg [15:0] buffered_rdata;
+    wire [15:0] rom_data;
+    wire [15:0] rdata;
     reg  [1:0] read_cycle;
     reg  [1:0] write_cycle;
     wire       read_in_progress;
     wire       write_in_progress;
     wire       read_finishing;
     wire       write_finishing;
-    assign femto_rdata = {data_in, read_cycle[1] ? buffered_rdata : data_in};
-    assign femto_rbusy = femto_rstrb || (read_in_progress && !read_finishing);
+    wire       is_rom_addr;
+    assign femto_rdata = {rdata, read_cycle[1] ? buffered_rdata : rdata};
+    assign femto_rbusy = femto_rstrb || (read_in_progress && !read_finishing) || !busack_n;
     assign femto_wbusy = femto_wstrb || (write_in_progress && !write_finishing);
-    assign rd_n = !(femto_rstrb || read_in_progress);
+    assign rd_n = !(femto_rstrb || read_in_progress) || is_rom_addr;
     assign wr_n[0] = !(femto_wstrb || write_cycle == 2'b10);
     assign wr_n[1] = !(femto_wstrb || write_cycle == 2'b10);
 
@@ -73,16 +76,24 @@ module RV4028_femtorv(
     assign read_finishing = read_cycle[0] && wait_n && (femto_half || read_cycle[1]);
     assign write_finishing = write_cycle[0] && (femto_half || write_cycle[1]);
 
+    assign is_rom_addr = ~|femto_addr[31:20];
+    assign rdata = is_rom_addr ? rom_data : data_in;
+
     always @(posedge clk) begin
         if (!rst_n) begin
             read_cycle <= 0;
+            busack_n <= 1'b1;
         end else begin
-            if (femto_rstrb || read_in_progress) begin
+            if (femto_rstrb && !busrq_n)
+                busack_n <= 1'b0;
+            else 
+            if (femto_rstrb || read_in_progress || (busrq_n && !busack_n)) begin
+                busack_n <= 1'b1;
                 if (!(!wait_n && read_cycle[0])) begin
                     read_cycle <= read_cycle + 1;
                 end
                 if (read_cycle[0]) begin
-                    buffered_rdata <= data_in;
+                    buffered_rdata <= rdata;
                 end
                 if (read_finishing) begin
                     read_cycle <= 0;
@@ -117,6 +128,13 @@ module RV4028_femtorv(
     assign mreq_n[1] = !(femto_rstrb || read_in_progress || 
                          femto_wstrb || (write_cycle == 2'b10));
 
-    assign busack_n = 1'b1;
+    rv2048_rom i_rom(
+        .clk(clk),
+        .ren(1'b1),
+        .addr(addr[11:1]),
+        .data_out(rom_data)
+    );
+
+    wire unused = &{1'b0, femto_addr[0], int_n};
 
 endmodule

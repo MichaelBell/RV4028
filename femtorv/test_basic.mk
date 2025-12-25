@@ -6,7 +6,7 @@ SIM ?= icarus
 WAVES ?= 1
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)
-PROJECT_SOURCES = rv4028.v femto_quark_bi.v
+PROJECT_SOURCES = rv4028.v femto_quark_bi.v rom.v
 
 # RTL simulation:
 SIM_BUILD				= sim_build/rtl

@@ -21,6 +21,8 @@ module tb ();
     wire iorq_n;
     wire mreq_n;
     wire int_n;
+    wire busrq_n;
+    wire busack_n;
 
     wire [1:0] mreq_buf;
     wire [1:0] wr_buf;
@@ -36,6 +38,8 @@ module tb ();
         .mreq_n(mreq_buf),
         .wait_n(wait_n),
         .int_n(int_n),
+        .busrq_n(busrq_n),
+        .busack_n(busack_n),
         .data_in(data_in),
         .data_out(data_out),
         .data_oe(data_oe)

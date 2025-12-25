@@ -342,7 +342,7 @@ module FemtoRV32(
       if(!resetn) begin
          state      <= WAIT_ALU_OR_MEM; // Just waiting for !mem_wbusy
          PC         <= RESET_ADDR[PC_WIDTH-1:0];
-         instr      <= 30'd1;  // Invalid op wit rd=0, which will set rd to 0.
+         instr      <= 30'd1;  // Invalid op with rd=0, which will set rd to 0.
       end else
 
       // See note [1] at the end of this file.

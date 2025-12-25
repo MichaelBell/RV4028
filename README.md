@@ -73,11 +73,11 @@ An [SN74LVC1GX04](https://www.lcsc.com/datasheet/C2653063.pdf) could be used to 
 
 ## Backplane
 
-USB-C socket, with data wired to spare pins for RP2350.
+USB-C socket, with data wired to spare pins for RP2350 on IO board.
 
-AP2112K for 3.3V supply.
+AP2112K for 3.3V supply.  3v3 enable is delayed by a few milliseconds to help with power sequencing on the CPU board (the core power to the FPGA should be applied before IO voltage).
 
-Decoupling caps, LED, reset button.
+Decoupling caps, LED, reset button.  Use surface mount headers for the 2x40 pin connectors (C49906), this should allow sll the signals to run above a nice unbroken ground plane, rather than having loads of through holes breaking up the ground planes.
 
 # Bus timing
 

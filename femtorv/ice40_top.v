@@ -24,7 +24,7 @@ module ice40_top(
 
     inout  [15:0] data,
 
-    inout         lo_addr_n,  // Asserted if addr[31:24] is 0
+    inout         lo_addr,  // Asserted if addr[31:24] is 0
     input   [2:0] spare,
     input         clk2,
     input         rst2,
@@ -84,6 +84,6 @@ module ice40_top(
 	);
 
     assign led = !rd_n;
-    assign lo_addr_n = busack_n ? |addr_out[31:24] : 1'bz;
+    assign lo_addr = busack_n ? ~|addr_out[31:24] : 1'bz;
 
 endmodule

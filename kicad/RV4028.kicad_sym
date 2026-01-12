@@ -440,7 +440,7 @@
 			(pin input line
 				(at -11.43 41.91 0)
 				(length 2.54)
-				(name "~{LO_ADDR}"
+				(name "LO_ADDR"
 					(effects
 						(font
 							(size 1.27 1.27)

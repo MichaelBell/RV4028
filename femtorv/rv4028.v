@@ -76,7 +76,7 @@ module RV4028_femtorv(
     assign read_finishing = read_cycle[0] && wait_n && (femto_half || read_cycle[1]);
     assign write_finishing = write_cycle[0] && (femto_half || write_cycle[1]);
 
-    assign is_rom_addr = ~|femto_addr[31:20];
+    assign is_rom_addr = (femto_addr[31:24] == 8'h01);
     assign rdata = is_rom_addr ? rom_data : data_in;
 
     always @(posedge clk) begin

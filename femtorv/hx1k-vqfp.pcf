@@ -43,7 +43,7 @@ set_io msk_n[1] 59
 set_io iorq_n 73
 set_io req_n 66
 set_io wait_n 69
-set_io lo_addr 65
+set_io lo_addr_n 65
 set_io busrq_n 41
 set_io busack_n 42
 

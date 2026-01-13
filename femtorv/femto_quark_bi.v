@@ -53,7 +53,7 @@ module FemtoRV32(
    input         resetn      // set to 0 to reset the processor
 );
 
-   parameter RESET_ADDR       = 32'h01000000;
+   parameter RESET_ADDR       = 32'h08000000;
    parameter ADDR_WIDTH       = 32;
    parameter PC_WIDTH         = 32;
 

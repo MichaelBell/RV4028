@@ -3281,7 +3281,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(fp_text user "PWR"
+	(fp_text user "3V3"
 		(at -4.6 -2.6 90)
 		(unlocked yes)
 		(layer "B.SilkS")
@@ -3502,7 +3502,7 @@
 			(justify right bottom mirror)
 		)
 	)
-	(fp_text user "PWR"
+	(fp_text user "3V3"
 		(at -4.64 1.89 90)
 		(unlocked yes)
 		(layer "B.SilkS")
@@ -4796,13 +4796,13 @@
 	(embedded_fonts no)
 	(model "${KICAD9_3DMODEL_DIR}/Connector_PinHeader_2.00mm.3dshapes/PinHeader_2x40_P2.00mm_Horizontal.step"
 		(offset
-			(xyz 0 0 0)
+			(xyz 39 1.6 0)
 		)
 		(scale
 			(xyz 1 1 1)
 		)
 		(rotate
-			(xyz 0 0 0)
+			(xyz -0 -0 90)
 		)
 	)
 )

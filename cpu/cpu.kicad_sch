@@ -1294,7 +1294,7 @@
 					)
 				)
 			)
-			(property "Footprint" ""
+			(property "Footprint" "RV4028:Module_2mm"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1964,7 +1964,7 @@
 				(pin bidirectional line
 					(at -11.43 6.35 0)
 					(length 2.54)
-					(name "SPARE1"
+					(name "USB_DN"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1982,7 +1982,7 @@
 				(pin bidirectional line
 					(at -11.43 3.81 0)
 					(length 2.54)
-					(name "SPARE2"
+					(name "USB_DP"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2684,7 +2684,7 @@
 				(pin bidirectional line
 					(at 11.43 6.35 180)
 					(length 2.54)
-					(name "USB_DP"
+					(name "SPARE1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2702,7 +2702,7 @@
 				(pin bidirectional line
 					(at 11.43 3.81 180)
 					(length 2.54)
-					(name "USB_DN"
+					(name "SPARE2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -6035,16 +6035,24 @@
 		(uuid "5d751cc4-d38c-4a0c-995e-052598c65616")
 	)
 	(no_connect
+		(at 152.4 78.74)
+		(uuid "8346f8d9-cb67-41bc-ab7f-e7ef0b89ed7f")
+	)
+	(no_connect
 		(at 152.4 40.64)
 		(uuid "9ae25ec8-1ad8-4a19-aee1-7cd905241d3a")
+	)
+	(no_connect
+		(at 36.83 121.92)
+		(uuid "9dd5c9af-e101-4758-8713-601a5d9dd55d")
 	)
 	(no_connect
 		(at 36.83 114.3)
 		(uuid "cf901a0b-4243-4246-a089-ee0f9ee6b394")
 	)
 	(no_connect
-		(at 59.69 119.38)
-		(uuid "d2c04569-a28a-4dbf-bee4-692c2494e871")
+		(at 36.83 119.38)
+		(uuid "f0659aa9-86fa-4d17-bd83-c6225d203462")
 	)
 	(wire
 		(pts
@@ -9154,6 +9162,28 @@
 			)
 		)
 	)
+	(global_label "SPARE1"
+		(shape bidirectional)
+		(at 59.69 119.38 0)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "843706ab-71d2-4510-8315-a39b72a27e68")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 70.9831 119.38 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "D10"
 		(shape bidirectional)
 		(at 152.4 96.52 0)
@@ -9260,28 +9290,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "SPARE1"
-		(shape bidirectional)
-		(at 36.83 119.38 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "977d4284-db8f-4935-83bf-9860409b2265")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 25.5369 119.38 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -9414,28 +9422,6 @@
 					(size 1.27 1.27)
 				)
 				(justify left)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "SPARE2"
-		(shape bidirectional)
-		(at 36.83 121.92 180)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "9f93d4a8-e4bd-42fd-bea0-89fd919297ef")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 25.5369 121.92 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
 				(hide yes)
 			)
 		)
@@ -10074,28 +10060,6 @@
 					(size 1.27 1.27)
 				)
 				(justify right)
-				(hide yes)
-			)
-		)
-	)
-	(global_label "SPARE2"
-		(shape bidirectional)
-		(at 152.4 78.74 0)
-		(fields_autoplaced yes)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "e10552b2-6366-4423-aba8-4106c7e68e0c")
-		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 163.6931 78.74 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
 				(hide yes)
 			)
 		)

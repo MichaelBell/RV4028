@@ -1321,7 +1321,7 @@
 					(hide yes)
 				)
 			)
-			(property "JLC" "C3410"
+			(property "JLC" "C3407"
 				(at 0 0 0)
 				(effects
 					(font
@@ -10777,7 +10777,7 @@
 				(hide yes)
 			)
 		)
-		(property "JLC" "C3410"
+		(property "JLC" "C3407"
 			(at 48.26 125.73 0)
 			(effects
 				(font

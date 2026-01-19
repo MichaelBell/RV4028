@@ -7585,7 +7585,7 @@
 				)
 			)
 		)
-		(property "JLC" "C3410"
+		(property "JLC" "C3407"
 			(at 0 0 0)
 			(unlocked yes)
 			(layer "F.Fab")

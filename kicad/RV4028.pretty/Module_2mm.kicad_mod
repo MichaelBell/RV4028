@@ -3229,7 +3229,7 @@
 			(justify right bottom mirror)
 		)
 	)
-	(fp_text user "~{MK0}"
+	(fp_text user "~{LB}"
 		(at -2.64 1.89 90)
 		(unlocked yes)
 		(layer "B.SilkS")
@@ -3632,7 +3632,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(fp_text user "~{MK1}"
+	(fp_text user "~{UB}"
 		(at -2.6 -2.6 90)
 		(unlocked yes)
 		(layer "B.SilkS")

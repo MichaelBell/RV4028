@@ -1,4 +1,4 @@
-Copyright (c) 2025, Michael Bell
+Copyright (c) 2025-2026, Michael Bell
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

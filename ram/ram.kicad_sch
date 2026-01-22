@@ -4,6 +4,12 @@
 	(generator_version "9.0")
 	(uuid "a72bc1f9-eeea-4c1b-aab3-bae5fa3a8781")
 	(paper "A4")
+	(title_block
+		(title "RV4028 RAM Module")
+		(date "2026-01-22")
+		(rev "v0.1")
+		(company "Team Rebellion")
+	)
 	(lib_symbols
 		(symbol "74xGxx:74LVC2G04"
 			(exclude_from_sim no)

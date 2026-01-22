@@ -6,7 +6,7 @@
 	(paper "A4")
 	(title_block
 		(title "RV4028 CPU Module")
-		(date "2025-10-25")
+		(date "2026-01-22")
 		(rev "v0.1")
 		(company "Team Rebellion")
 	)

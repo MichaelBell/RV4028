@@ -4,6 +4,12 @@
 	(generator_version "9.0")
 	(uuid "b95a6d7e-1e8a-4026-baea-0cf6a9355bcc")
 	(paper "A3")
+	(title_block
+		(title "RV4028 Backplane")
+		(date "2026-01-22")
+		(rev "v0.1")
+		(company "Team Rebellion")
+	)
 	(lib_symbols
 		(symbol "Device:C"
 			(pin_numbers

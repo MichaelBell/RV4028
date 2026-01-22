@@ -1,7 +1,5 @@
 # RP2350 IO module for RV4028
 
-A 40-pin module.  Possibly optionally RC2014 compatible?
-
 ## Features
 
 Basic idea is to expose the RP2350's hardware blocks as memory mapped peripherals.
@@ -14,9 +12,9 @@ Peripherals:
 - Maybe a WS2812 interface (exposing 5V power)
 - Further pins as general purpose IO.  Maybe could expose a PIO block?
 
-Clock and reset are connected, and can optionally be driven.  An IO is sampled at boot and if tied low the board will provide the clock.  Reset is normally not driven, but could be by custom firmware.
+Clock and reset are connected, and can optionally be driven, depending on the loaded firmware.
 
-WAIT and INT should be connected (though WAIT is not on the bottom 40 row, a separate pin for that could be wired if required).
+WAIT and INT should be connected.
 
 Other wiring:
 - USB to the USB pins on the backplane

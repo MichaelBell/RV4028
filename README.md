@@ -12,9 +12,9 @@ All hardware and software will be open source and permissively licensed.
 
 The system bus has a 32-bit address and 16-bit data, which fits reasonably well with an RV32 system and readily available (P)SRAM chips, and runs at 3.3V.
 
-Modules are attached by an 80-pin dual row header, similar to RC2014 modules but with 2 rows of pins instead of 1.
+Modules are attached by an 80-pin dual row header, similar to RC2014 modules but with 2 rows of pins instead of 1.  2mm pitch headers are used instead of 2.54mm, this makes boards slightly smaller (and cheaper), and also avoids the possibility of boards being plugged into RC2014 by mistake.
 
-The pinout of the first row is chosen such that RC2014 modules might be compatible, if 3v3 capable components are used.  This also means that modules not requiring access to the full bus can be single row.
+However, the pinout is chosen such that RC2014 modules might be compatible, if 3v3 capable components are used and a backplane with additional 2.54mm pitch sockets were created.  The pinout is also chosen such that modules not requiring access to the full bus can use just a single row.
 
 [![Bus connector](BusConnSmaller.png)](BusConn.png)
 
@@ -42,6 +42,8 @@ The two candidates here are PSRAM, such as the [IS66WVE](https://www.lcsc.com/da
 
 The PSRAM is larger but slower, and the larger capacities only seem available in BGA packages.  The linked SRAM is available in TSOP, which may allow for easier assembly.
 
+[Schematic](ram/ram.pdf)
+
 ## ROM
 
 Something like [SST39VF3202C](https://www.lcsc.com/datasheet/C637403.pdf) looks suitable, and available at the same access speed as the PSRAM (70ns).
@@ -49,6 +51,8 @@ Something like [SST39VF3202C](https://www.lcsc.com/datasheet/C637403.pdf) looks 
 ROM might not be required - we can embed a small amount of ROM (6kB) in the CPU gateware which could be enough for a simple SD card driver, allowing a program to be loaded from SD card to RAM without any ROM.
 
 ## IO
+
+![IO Module render](io/IO.png)
 
 An [RP2350B](https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf) is used for IO.  The board should include:
 - Two UARTs
@@ -59,15 +63,17 @@ An [RP2350B](https://datasheets.raspberrypi.com/rp2350/rp2350-datasheet.pdf) is 
 
 8 bits of address should easily be sufficient, and 8 bits of data should also be fine, which allows this to be single row.
 
-I'm tempted to put USB on a couple of the spare backplane pins, so a single USB connection can power the system and be used to communicate with the RP2350.
+I'm tempted to put USB on a couple of the spare backplane pins, so a single USB connection can power the system and be used to communicate with/program the RP2350.
 
 If we also wired clock and reset from the RP2350 then it could provide a clock, meaning a separate clock module would not be required.
+
+[Schematic](io/io.pdf) | [More details](io/README.md)
 
 ## Clock
 
 As above, a clock module likely won't be required, but it is a nice educational addition, and would allow the machine to be used without the RP2350 based IO module.
 
-A 14.7456MHz crystal would seem appropriate - double the clock rate of the RC2014.  Assuming IS66WVE PSRAM is used, the maximum reliable clock rate of the system should be around 17-18MHz.
+A 14.7456MHz crystal would seem appropriate - double the clock rate of the RC2014.  Assuming IS66WVE PSRAM is used, the maximum reliable clock rate of the system should be around 17-18MHz (TBC).
 
 An [SN74LVC1GX04](https://www.lcsc.com/datasheet/C2653063.pdf) could be used to drive the crystal.
 
@@ -77,7 +83,7 @@ USB-C socket, with data wired to spare pins for RP2350 on IO board.
 
 AP2112K for 3.3V supply.  3v3 enable is delayed by a few milliseconds to help with power sequencing on the CPU board (the core power to the FPGA should be applied before IO voltage).
 
-Decoupling caps, LED, reset button.  Use surface mount headers for the 2x40 pin connectors (C49906), this should allow sll the signals to run above a nice unbroken ground plane, rather than having loads of through holes breaking up the ground planes.
+Decoupling caps, LED, reset button.  Use surface mount headers for the 2x40 pin connectors, allows all the signals to run above a nice unbroken ground plane, rather than having loads of through holes breaking up the ground planes.
 
 # Bus timing
 

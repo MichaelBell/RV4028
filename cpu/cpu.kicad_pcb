@@ -16084,7 +16084,7 @@
 			)
 		)
 	)
-	(gr_text "RV2048 CPU v0.1\n© Mike Bell 2026\nJLCJLCJLCJLC"
+	(gr_text "RV2048 CPU v0.1\n© Michael Bell 2026\nJLCJLCJLCJLC"
 		(at 175 101.25 90)
 		(layer "B.SilkS")
 		(uuid "d1a53d66-d98d-46ee-b0bf-034cbb4ebc54")

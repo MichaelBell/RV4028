@@ -18174,7 +18174,7 @@
 			(justify bottom mirror)
 		)
 	)
-	(gr_text "RV2048 CPU v0.1\n© Mike Bell 2026\nJLCJLCJLCJLC"
+	(gr_text "RV2048 IO v0.1\n© Michael Bell 2026\nJLCJLCJLCJLC"
 		(at 175 101.75 90)
 		(layer "B.SilkS")
 		(uuid "741c74ac-b488-4ea7-b810-fa38dbfa7774")

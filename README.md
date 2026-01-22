@@ -1,12 +1,12 @@
 # RV4028 - A hackable Risc-V computer
 
-RV4028 is intended as a Risc-V equivalent of the excellent [RC2014 Z80](https://rc2014.co.uk/) homebrew computer.
+RV4028 is intended to be a modular Risc-V computer, similar to the excellent [RC2014 Z80](https://rc2014.co.uk/) homebrew computer.
 
 The idea is to create a minimal Risc-V system that is easy to understand and extend.
 
 The inspiration for this came from [@theJPster](https://github.com/thejpster)'s [post](https://bsky.app/profile/thejpster.org.uk/post/3m3ngtx5sfc2i).
 
-All hardware and software will be open source and permissively licensed.
+All hardware and software are open source and permissively licensed.
 
 ## Architecture
 

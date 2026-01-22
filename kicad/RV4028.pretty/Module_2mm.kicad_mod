@@ -3553,7 +3553,7 @@
 			(justify left bottom mirror)
 		)
 	)
-	(fp_text user "LOA"
+	(fp_text user "~{LOA}"
 		(at 5.4 -2.6 90)
 		(unlocked yes)
 		(layer "B.SilkS")

@@ -38,9 +38,13 @@ A small flash is required for the FPGA configuration, a header will be provided 
 
 ## RAM
 
+![RAM Module render](ram/RAM.png)
+
 The two candidates here are PSRAM, such as the [IS66WVE](https://www.lcsc.com/datasheet/C1350157.pdf), or SRAM such as the [CY7C1041G30](https://www.lcsc.com/datasheet/C2944680.pdf).
 
 The PSRAM is larger but slower, and the larger capacities only seem available in BGA packages.  The linked SRAM is available in TSOP, which may allow for easier assembly.
+
+The current RAM module uses the PSRAM.
 
 [Schematic](ram/ram.pdf)
 

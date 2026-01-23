@@ -1741,6 +1741,19 @@
 				)
 			)
 		)
+		(property "JLC" "C1350157"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "b8190528-3e33-4242-9151-bbb874144db1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(path "/bf990ff0-ef1e-47e6-a141-c0252563cc9d")
 		(sheetname "/")
 		(sheetfile "ram.kicad_sch")
@@ -11730,6 +11743,18 @@
 				(thickness 0.1)
 			)
 			(justify left bottom)
+		)
+	)
+	(gr_text "RV2048 RAM v0.1\n© Michael Bell 2026\nJLCJLCJLCJLC"
+		(at 173 80 90)
+		(layer "B.SilkS")
+		(uuid "09c3e32f-c380-4792-a60d-741878ed5d59")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+			(justify bottom mirror)
 		)
 	)
 	(gr_text "RV4028 RAM\n"

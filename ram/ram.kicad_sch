@@ -9488,6 +9488,15 @@
 				(hide yes)
 			)
 		)
+		(property "JLC" "C1350157"
+			(at 187.96 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "F1"
 			(uuid "8b1a0f35-fc8d-4141-91ae-7f37a951eac3")
 		)

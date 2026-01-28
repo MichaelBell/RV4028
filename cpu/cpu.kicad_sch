@@ -11123,7 +11123,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp yes)
+		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "137ff181-0e8f-4e28-81b6-c2f9723a4947")
 		(property "Reference" "J2"
@@ -11163,6 +11163,15 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x08, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 223.52 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLC" "C5383116"
 			(at 223.52 95.25 0)
 			(effects
 				(font

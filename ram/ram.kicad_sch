@@ -7967,6 +7967,15 @@
 				(hide yes)
 			)
 		)
+		(property "JLC" "C49257"
+			(at 110.49 49.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "3"
 			(uuid "3eab3a1c-1804-494b-adeb-4a19b8b465db")
 		)
@@ -9968,6 +9977,15 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 110.49 38.1 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLC" "C49257"
 			(at 110.49 38.1 0)
 			(effects
 				(font

@@ -19079,6 +19079,15 @@
 				(hide yes)
 			)
 		)
+		(property "JLC" "C5383108"
+			(at 300.99 224.79 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "12"
 			(uuid "3ed74484-e5c9-468b-98b5-48da09970388")
 		)
@@ -19181,6 +19190,15 @@
 			)
 		)
 		(property "Description" "Generic connector, double row, 02x03, odd/even pin numbering scheme (row 1 odd numbers, row 2 even numbers), script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 394.97 232.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "JLC" "C5383104"
 			(at 394.97 232.41 0)
 			(effects
 				(font

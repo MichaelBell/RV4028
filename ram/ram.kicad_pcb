@@ -282,6 +282,19 @@
 				)
 			)
 		)
+		(property "JLC" "C49257"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0a103371-55c3-4fe3-a24a-ca195641e2cf")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_1x??_*")
 		(path "/28d99d12-944d-40cd-90e9-240be5c55f29")
 		(sheetname "/")
@@ -2956,6 +2969,19 @@
 			(effects
 				(font
 					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "JLC" "C49257"
+			(at 0 0 180)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "abf071b0-0da8-4604-89a9-f54ab423b215")
+			(effects
+				(font
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)

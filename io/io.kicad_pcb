@@ -16114,6 +16114,19 @@
 				)
 			)
 		)
+		(property "JLC" "C5383108"
+			(at 0 0 90)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "83c8f6f5-b9ea-47b8-afc9-e099f3b798a1")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_2x??_*")
 		(path "/bef16936-10c2-48d4-81d1-949d26cbb484")
 		(sheetname "/")
@@ -17422,6 +17435,19 @@
 				)
 			)
 		)
+		(property "JLC" "C5383104"
+			(at 0 0 0)
+			(unlocked yes)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7a953add-6230-4331-844f-b462fbb8d8f5")
+			(effects
+				(font
+					(size 1 1)
+					(thickness 0.15)
+				)
+			)
+		)
 		(property ki_fp_filters "Connector*:*_2x??_*")
 		(path "/c1bf25c1-a25c-414e-82c6-c35197102ab6")
 		(sheetname "/")
@@ -18187,7 +18213,7 @@
 		)
 	)
 	(gr_text "RV2048 IO v0.1\n© Michael Bell 2026\nJLCJLCJLCJLC"
-		(at 175 101.75 90)
+		(at 170 101.75 90)
 		(layer "B.SilkS")
 		(uuid "741c74ac-b488-4ea7-b810-fa38dbfa7774")
 		(effects
@@ -18208,18 +18234,6 @@
 				(thickness 0.1016)
 			)
 			(justify bottom mirror)
-		)
-	)
-	(gr_text "~{BRQ}"
-		(at 141.4 114.9 90)
-		(layer "B.SilkS")
-		(uuid "945360fb-827d-44a0-ae52-0b077c0feabd")
-		(effects
-			(font
-				(size 0.635 0.635)
-				(thickness 0.1016)
-			)
-			(justify right bottom mirror)
 		)
 	)
 	(gr_text "SI\nCS2"

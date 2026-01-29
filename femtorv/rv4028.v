@@ -132,7 +132,7 @@ module RV4028_femtorv(
     rv4028_rom i_rom(
         .clk(clk),
         .ren(1'b1),
-        .addr(addr[11:1]),
+        .addr(addr[12:1]),
         .data_out(rom_data)
     );
 

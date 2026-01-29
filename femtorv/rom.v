@@ -8,14 +8,14 @@
 module rv4028_rom(
     input clk,
     input ren,
-    input [11:1] addr,
+    input [12:1] addr,
 
     output reg [15:0] data_out
 );
 
     parameter INIT_FILE = "rom.hex";
 
-    reg [15:0] rom [0:2047];
+    reg [15:0] rom [0:3071];
     initial begin
         $readmemh(INIT_FILE, rom);
     end

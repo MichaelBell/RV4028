@@ -5,7 +5,7 @@
 
 `default_nettype none
 
-module rv2048_rom(
+module rv4028_rom(
     input clk,
     input ren,
     input [11:1] addr,

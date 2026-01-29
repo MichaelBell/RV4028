@@ -18,9 +18,9 @@ module RV4028_femtorv(
     output  [1:0] mreq_n, // Asserted during bus transactions
     input         wait_n, // Read not ready
     
-    input         int_n,  // Interrupt - currently not supported
-    input         busrq_n,  // Request bus release - todo
-    output reg    busack_n, // Allow bus release - todo
+    input         int_n,  // Interrupt
+    input         busrq_n,  // Request bus release
+    output reg    busack_n, // Allow bus release
 
     input  [15:0] data_in,
     output [15:0] data_out,
@@ -50,6 +50,7 @@ module RV4028_femtorv(
         .mem_rstrb(femto_rstrb),
         .mem_rbusy(femto_rbusy),
         .mem_wbusy(femto_wbusy),
+        .interrupt_request(!int_n),
         .resetn(rst_n)
     );
 
@@ -128,7 +129,7 @@ module RV4028_femtorv(
     assign mreq_n[1] = !(femto_rstrb || read_in_progress || 
                          femto_wstrb || (write_cycle == 2'b10));
 
-    rv2048_rom i_rom(
+    rv4028_rom i_rom(
         .clk(clk),
         .ren(1'b1),
         .addr(addr[11:1]),

@@ -50,10 +50,13 @@ module FemtoRV32(
    input         mem_rbusy, // asserted if memory is busy reading value
    input         mem_wbusy, // asserted if memory is busy writing value
 
+   input         interrupt_request,
+
    input         resetn      // set to 0 to reset the processor
 );
 
    parameter RESET_ADDR       = 32'h08000000;
+   parameter INT_ADDR         = 32'h00000000;
    parameter ADDR_WIDTH       = 32;
    parameter PC_WIDTH         = 32;
 
@@ -218,18 +221,81 @@ module FemtoRV32(
 
    wire [PC_WIDTH-1:0] PC_new =
       jumpToPCplusImm ? PCplusImm                      :
-                        PCplus4;
+                         PCplus4;
 
    assign mem_addr = state[WAIT_INSTR_bit] | state[FETCH_INSTR_bit] ? PC     :
                      state[EXECUTE_bit] & ~isLoad & ~isStore        ? PC_new :
                                                               loadstore_addr ;
 
    /***************************************************************************/
+   // Interrupt logic, CSR registers and opcodes.
+   /***************************************************************************/
+
+   // Interrupt logic:
+
+   // Remember interrupt requests as they are not checked for every cycle   
+   reg  interrupt_request_sticky;
+   // Interrupt enable and lock logic   
+   wire interrupt = interrupt_request_sticky & mstatus & ~mcause;
+   // Processor accepts interrupts in EXECUTE state.   
+   wire interrupt_accepted = interrupt & state[EXECUTE_bit];        
+
+   // If current interrupt is accepted, there already might be the next one, 
+   // which should not be missed:
+   always @(posedge clk) begin
+     interrupt_request_sticky <= 
+        interrupt_request | (interrupt_request_sticky & ~interrupt_accepted);
+   end
+
+   // Decoder for mret opcode
+   wire interrupt_return = isSYSTEM & funct3Is[0]; // & (instr[31:20]==12'h302);
+
+   // CSRs:
+   reg  [ADDR_WIDTH-1:0] mepc;    // The saved program counter.
+   reg                   mstatus; // Interrupt enable
+   reg                   mcause;  // Interrupt cause (and lock)
+   reg  [31:0]           cycles;  // Cycle counter
+
+   always @(posedge clk) cycles <= cycles + 1;
+
+   wire sel_mstatus = (instr[31:20] == 12'h300);
+   wire sel_mepc    = (instr[31:20] == 12'h341);
+   wire sel_mcause  = (instr[31:20] == 12'h342);
+   wire sel_cycles  = (instr[31:20] == 12'hC00);
+
+   // Read CSRs:
+   /* verilator lint_off WIDTH */
+   wire [31:0] CSR_read =
+     (sel_mstatus ? {28'b0, mstatus, 3'b0}  : 32'b0) |
+     (sel_mepc    ? mepc                    : 32'b0) |
+     (sel_mcause  ? {mcause, 31'b0}         : 32'b0) |
+     (sel_cycles  ? cycles[31:0]            : 32'b0) ;
+   /* verilator lint_on WIDTH */
+
+   // Write CSRs: 5 bit unsigned immediate or content of RS1
+   wire [31:0] CSR_modifier = instr[14] ? {27'd0, instr[19:15]} : rs1; 
+
+   wire [31:0] CSR_write = (instr[13:12] == 2'b10) ? CSR_modifier | CSR_read  :
+                           (instr[13:12] == 2'b11) ? ~CSR_modifier & CSR_read :
+                        /* (instr[13:12] == 2'b01) ? */  CSR_modifier ;
+
+   always @(posedge clk) begin
+      if(!resetn) begin
+	      mstatus <= 0;
+      end else begin
+         // Execute a CSR opcode
+         if (isSYSTEM & (instr[14:12] != 0) & state[EXECUTE_bit]) begin
+            if (sel_mstatus) mstatus <= CSR_write[3];
+         end
+      end
+   end
+
+   /***************************************************************************/
    // The value written back to the register file.
    /***************************************************************************/
 
    wire [31:0] writeBackData  =
-      (isSYSTEM            ? cycles     : 32'b0) |  // SYSTEM
+      (isSYSTEM            ? CSR_read   : 32'b0) |  // SYSTEM
       (isLUI               ? Uimm       : 32'b0) |  // LUI
       (isALU               ? aluOut     : 32'b0) |  // ALUreg, ALUimm
       (isAUIPC             ? aluPlus    : 32'b0) |  // AUIPC
@@ -343,47 +409,46 @@ module FemtoRV32(
          state      <= WAIT_ALU_OR_MEM; // Just waiting for !mem_wbusy
          PC         <= RESET_ADDR[PC_WIDTH-1:0];
          instr      <= 30'd1;  // Invalid op with rd=0, which will set rd to 0.
+         mcause     <= 0;
       end else
 
       // See note [1] at the end of this file.
       (* parallel_case *)
       case(1'b1)
 
-        state[WAIT_INSTR_bit]: begin
-           if(!mem_rbusy) begin // may be high when executing from SPI flash
-              rs1 <= registerFile[mem_rdata[19:15]];
-              rs2 <= registerFile[mem_rdata[24:20]];
-              instr <= mem_rdata[31:2]; // Bits 0 and 1 are ignored (see
-              state <= EXECUTE;         // also the declaration of instr).
-           end
-        end
+         state[WAIT_INSTR_bit]: begin
+            if(!mem_rbusy) begin // may be high when executing from SPI flash
+               rs1 <= registerFile[mem_rdata[19:15]];
+               rs2 <= registerFile[mem_rdata[24:20]];
+               instr <= mem_rdata[31:2]; // Bits 0 and 1 are ignored (see
+               state <= EXECUTE;         // also the declaration of instr).
+            end
+         end
 
-        state[EXECUTE_bit]: begin
-           PC <= PC_new;
-           state <= needToWait ? WAIT_ALU_OR_MEM : WAIT_INSTR;
-        end
+         state[EXECUTE_bit]: begin
+            if (interrupt) begin
+               PC     <= INT_ADDR;
+               mepc   <= PC_new;
+               mcause <= 1;
+            end else if (interrupt_return) begin
+               mcause <= 0;
+               PC <= mepc;
+            end else begin
+               PC <= PC_new;
+            end
+            state <= needToWait ? WAIT_ALU_OR_MEM : WAIT_INSTR;
+         end
 
-        state[WAIT_ALU_OR_MEM_bit]: begin
-           if(!mem_rbusy & !mem_wbusy) state <= FETCH_INSTR;
-        end
+         state[WAIT_ALU_OR_MEM_bit]: begin
+            if(!mem_rbusy & !mem_wbusy) state <= FETCH_INSTR;
+         end
 
-        default: begin // FETCH_INSTR
-          state <= WAIT_INSTR;
-        end
+         default: begin // FETCH_INSTR
+            state <= WAIT_INSTR;
+         end
 
       endcase
    end
-
-   /***************************************************************************/
-   // Cycle counter
-   /***************************************************************************/
-
-`ifdef NRV_COUNTER_WIDTH
-   reg [`NRV_COUNTER_WIDTH-1:0]  cycles;
-`else
-   reg [31:0]  cycles;
-`endif
-   always @(posedge clk) cycles <= cycles + 1;
 
     integer i;
     initial begin

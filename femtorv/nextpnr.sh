@@ -1,6 +1,6 @@
 #!/bin/bash
 
-r=100
+r=2
 while ! nextpnr-ice40 $* > nextpnr.log 2>& 1
 do
   ((--r)) || exit 2

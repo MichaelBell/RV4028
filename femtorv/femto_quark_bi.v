@@ -24,7 +24,7 @@
 //    (reducing its width may be useful for space-constrained designs).
 //
 // Bruno Levy, Matthias Koch, 2020-2021
-// Modifications: Michael Bell 2023-2025
+// Modifications: Michael Bell 2023-2026
 // SPDX-License-Identifier: BSD-3-Clause
 /*******************************************************************/
 
@@ -128,15 +128,16 @@ module FemtoRV32(
 
    // The adder is used for both ALU and address generation.
    wire [31:0] aluPlusIn1 = (isALU | isStore | isLoad | isJALR) ? aluIn1 : PC;
-   wire [31:0] aluPlusIn2 = isStore  ? Simm :
-                            isJAL    ? Jimm :
-                            isAUIPC  ? Uimm :
-                            isBranch ? Bimm :
-                            isALUreg ? rs2  : Iimm;
+   wire [31:0] aluOpIn2 = isStore  ? Simm :
+                          isJAL    ? Jimm :
+                          isAUIPC  ? Uimm :
+                          isBranch ? Bimm :
+                          isALUreg ? rs2  : Iimm;
    wire aluSubtract = (isALUreg & instr[30]) |         // Subtract
                       (isALU & instr[13]) | isBranch;  // Uses LT/LTU/EQ
 
-   wire [32:0] aluResult = {1'b0,aluPlusIn1} + (aluSubtract ? (~aluPlusIn2 + 1) : aluPlusIn2);
+   wire [31:0] aluPlusIn2 = aluSubtract ? (~aluOpIn2 + 1) : aluOpIn2;
+   wire [32:0] aluResult = {1'b0,aluPlusIn1} + {1'b0, aluPlusIn2};
    wire [31:0] aluPlus = aluResult[31:0];
 
    // Use a single 33 bits subtract to do subtraction and all comparisons
@@ -204,34 +205,6 @@ module FemtoRV32(
         funct3Is[7] & !LTU ; // BGEU
 
    /***************************************************************************/
-   // Program counter and branch target computation.
-   /***************************************************************************/
-
-   reg  [PC_WIDTH-1:0] PC;   // The program counter.
-   reg  [31:2] instr;        // Latched instruction. Note that bits 0 and 1 are
-                             // ignored (not used in RV32I base instr set).
-
-   wire [PC_WIDTH-1:0] PCplus4 = PC + 4;
-
-   // Branch address comes from the adder
-   wire [PC_WIDTH-1:0] PCplusImm = {aluPlus[PC_WIDTH-1:1],1'b0};
-
-   // Destination of load/store comes from the adder
-   wire [ADDR_WIDTH-1:0] loadstore_addr = aluPlus[ADDR_WIDTH-1:0];
-
-   /* verilator lint_off WIDTH */
-   // internal address registers and cycles counter may have less than
-   // 32 bits, so we deactivate width test for mem_addr and writeBackData
-
-   wire [PC_WIDTH-1:0] PC_new =
-      jumpToPCplusImm ? PCplusImm                      :
-                         PCplus4;
-
-   assign mem_addr = state[WAIT_INSTR_bit] | state[FETCH_INSTR_bit] ? PC     :
-                     state[EXECUTE_bit] & ~isLoad & ~isStore        ? PC_new :
-                                                              loadstore_addr ;
-
-   /***************************************************************************/
    // Interrupt logic, CSR registers and opcodes.
    /***************************************************************************/
 
@@ -268,20 +241,20 @@ module FemtoRV32(
    wire sel_cycles  = (instr[31:20] == 12'hC00);
 
    // Read CSRs:
-   /* verilator lint_off WIDTH */
    wire [31:0] CSR_read =
      (sel_mstatus ? {28'b0, mstatus, 3'b0}  : 32'b0) |
      (sel_mepc    ? mepc                    : 32'b0) |
      (sel_mcause  ? {mcause, 31'b0}         : 32'b0) |
      (sel_cycles  ? cycles[31:0]            : 32'b0) ;
-   /* verilator lint_on WIDTH */
 
    // Write CSRs: 5 bit unsigned immediate or content of RS1
    wire [31:0] CSR_modifier = instr[14] ? {27'd0, instr[19:15]} : rs1; 
 
+   /* verilator lint_off UNUSEDSIGNAL */
    wire [31:0] CSR_write = (instr[13:12] == 2'b10) ? CSR_modifier | CSR_read  :
                            (instr[13:12] == 2'b11) ? ~CSR_modifier & CSR_read :
                         /* (instr[13:12] == 2'b01) ? */  CSR_modifier ;
+   /* verilator lint_on UNUSEDSIGNAL */
 
    always @(posedge clk) begin
       if(!resetn) begin
@@ -293,6 +266,36 @@ module FemtoRV32(
          end
       end
    end
+
+   /***************************************************************************/
+   // Program counter and branch target computation.
+   /***************************************************************************/
+
+   reg  [PC_WIDTH-1:0] PC;   // The program counter.
+   reg  [31:2] instr;        // Latched instruction. Note that bits 0 and 1 are
+                             // ignored (not used in RV32I base instr set).
+
+   wire [PC_WIDTH-1:0] PCplus4 = PC + 4;
+
+   // Branch address comes from the adder
+   wire [PC_WIDTH-1:0] PCplusImm = {aluPlus[PC_WIDTH-1:1],1'b0};
+
+   // Destination of load/store comes from the adder
+   wire [ADDR_WIDTH-1:0] loadstore_addr = aluPlus[ADDR_WIDTH-1:0];
+
+   /* verilator lint_off WIDTH */
+   // internal address registers and cycles counter may have less than
+   // 32 bits, so we deactivate width test for mem_addr and writeBackData
+
+   wire [PC_WIDTH-1:0] PC_new =
+      interrupt        ? INT_ADDR  :
+      interrupt_return ? mepc      :
+      jumpToPCplusImm  ? PCplusImm :
+                         PCplus4;
+
+   assign mem_addr = state[WAIT_INSTR_bit] | state[FETCH_INSTR_bit] ? PC     :
+                     state[EXECUTE_bit] & ~isLoad & ~isStore        ? PC_new :
+                                                              loadstore_addr ;
 
    /***************************************************************************/
    // The value written back to the register file.
@@ -431,15 +434,13 @@ module FemtoRV32(
 
          state[EXECUTE_bit]: begin
             if (interrupt) begin
-               PC     <= INT_ADDR;
-               mepc   <= PC_new;
+               mepc   <= PCplus4;
                mcause <= 1;
             end else if (interrupt_return) begin
                mcause <= 0;
-               PC <= mepc;
-            end else begin
-               PC <= PC_new;
             end
+            PC <= PC_new;
+
             state <= needToWait ? WAIT_ALU_OR_MEM : WAIT_INSTR;
          end
 

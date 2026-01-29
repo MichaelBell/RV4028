@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 (c) Michael Bell
+/* Copyright 2023-2026 (c) Michael Bell
    SPDX-License-Identifier: BSD-3-Clause
    
    ROM module for RV4028 CPU */

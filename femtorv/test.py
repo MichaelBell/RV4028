@@ -16,6 +16,7 @@ async def reset(dut):
     dut.wait_n.value = 1
     dut.busrq_n.value = 1
     dut.rst_n.value = 1
+    dut.int_n.value = 1
     await ClockCycles(dut.clk, 2)
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
@@ -40,7 +41,9 @@ async def expect_read(dut, data, addr=None):
     assert dut.rd_n.value == 0
 
     if addr is None:
+        global last_addr
         addr = dut.addr.value.to_unsigned()
+        last_addr = addr
     else:
         assert dut.addr.value == addr
 
@@ -79,8 +82,8 @@ async def expect_read(dut, data, addr=None):
     await Timer(1, "ns")
     dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
 
-async def send_instr(dut, data):
-    await expect_read(dut, data)
+async def send_instr(dut, data, addr=None):
+    await expect_read(dut, data, addr)
 
 async def expect_write(dut, data, addr):
     assert dut.wr_n.value == 1
@@ -181,11 +184,12 @@ async def test_start(dut):
     # Reset
     await reset(dut)
 
+    # ROM jumps to address 0
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode(), 0)
+
     # Do some maths
     for i in range(8):
         await send_instr(dut, InstructionADDI(i+8, x0, 0x102*i).encode())
-
-    await send_instr(dut, InstructionLUI(gp, 0x400).encode())
 
     # Store a value
     await send_instr(dut, InstructionSW(gp, x9, 0x234).encode())
@@ -196,6 +200,45 @@ async def test_start(dut):
     await expect_read(dut, 0x12345678, 0x400334)
     await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
     await expect_write(dut, 0x12345678, 0x400334)
+
+@cocotb.test()
+async def test_interrupt(dut):
+    dut._log.info("Start")
+    
+    clock = Clock(dut.clk, 40, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    await reset(dut)
+
+    # ROM jumps to 0, cause should be 0
+    await send_instr(dut, InstructionCSRRS(a0, x0, csrnames.mcause).encode(), 0)
+    await check_reg(dut, a0, 0)
+
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode(), 8)
+
+    # Jump to a higher address
+    await send_instr(dut, InstructionJAL(x0, 0x1000).encode(), 0xC)
+
+    # Raise interrupt
+    dut.int_n.value = 0
+
+    # Interrupts not enabled so no change
+    await send_instr(dut, InstructionADDI(x1, x0, 0x8).encode(), 0x100C)
+
+    # Allow interrupts
+    await send_instr(dut, InstructionCSRRW(x0, x1, csrnames.mstatus).encode(), 0x1010)
+    await send_instr(dut, InstructionNOP().encode(), 0x1014)
+
+    # Interrupt vectors to 0, cause set
+    await send_instr(dut, InstructionCSRRS(a0, x0, csrnames.mcause).encode(), 0)
+    await check_reg(dut, a0, 0x80000000)
+    await send_instr(dut, InstructionADDI(x1, x0, 0x100).encode(), 0x8)
+    await send_instr(dut, InstructionMRET().encode(), 0xC)
+
+    # Return to correct address
+    await send_instr(dut, InstructionSW(gp, x1, 0x234).encode(), 0x1018)
+    await expect_write(dut, 0x100, 0x400234)
 
 ### Random operation testing ###
 reg = [0] * 32

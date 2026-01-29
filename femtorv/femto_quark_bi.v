@@ -133,11 +133,15 @@ module FemtoRV32(
                             isAUIPC  ? Uimm :
                             isBranch ? Bimm :
                             isALUreg ? rs2  : Iimm;
-   wire [31:0] aluPlus = aluPlusIn1 + aluPlusIn2;
+   wire aluSubtract = (isALUreg & instr[30]) |         // Subtract
+                      (isALU & instr[13]) | isBranch;  // Uses LT/LTU/EQ
+
+   wire [32:0] aluResult = {1'b0,aluPlusIn1} + (aluSubtract ? (~aluPlusIn2 + 1) : aluPlusIn2);
+   wire [31:0] aluPlus = aluResult[31:0];
 
    // Use a single 33 bits subtract to do subtraction and all comparisons
    // (trick borrowed from swapforth/J1)
-   wire [32:0] aluMinus = {1'b0,aluIn1} - {1'b0,aluIn2};
+   wire [32:0] aluMinus = aluResult;
    wire        LT  = (aluIn1[31] ^ aluIn2[31]) ? aluIn1[31] : aluMinus[32];
    wire        LTU = aluMinus[32];
    wire        EQ  = (aluMinus[31:0] == 0);

@@ -58,7 +58,7 @@ module FemtoRV32(
    parameter RESET_ADDR       = 32'h08000000;
    parameter INT_ADDR         = 32'h00000000;
    parameter ADDR_WIDTH       = 32;
-   parameter PC_WIDTH         = 32;
+   parameter PC_WIDTH         = 28;
 
  /***************************************************************************/
  // Instruction decoding.
@@ -124,20 +124,16 @@ module FemtoRV32(
    // Second ALU source, depends on opcode:
    //    ALUreg, Branch:     rs2
    //    ALUimm, Load, JALR: Iimm
-   wire [31:0] aluIn2 = isALUreg | isBranch ? rs2 : Iimm;
+   wire [31:0] aluIn2 = isStore  ? Simm :
+                        isALUreg | isBranch ? rs2 : Iimm;
 
    // The adder is used for both ALU and address generation.
-   wire [31:0] aluPlusIn1 = (isALU | isStore | isLoad | isJALR) ? aluIn1 : PC;
-   wire [31:0] aluOpIn2 = isStore  ? Simm :
-                          isJAL    ? Jimm :
-                          isAUIPC  ? Uimm :
-                          isBranch ? Bimm :
-                          isALUreg ? rs2  : Iimm;
    wire aluSubtract = (isALUreg & instr[30]) |         // Subtract
                       (isALU & instr[13]) | isBranch;  // Uses LT/LTU/EQ
 
-   wire [31:0] aluPlusIn2 = aluSubtract ? (~aluOpIn2 + 1) : aluOpIn2;
-   wire [32:0] aluResult = {1'b0,aluPlusIn1} + {1'b0, aluPlusIn2};
+   wire [32:0] aluExtIn2 = {1'b0, aluIn2};
+   wire [32:0] aluPlusIn2 = aluSubtract ? (~aluExtIn2 + 1) : aluExtIn2;
+   wire [32:0] aluResult = {1'b0, aluIn1} + aluPlusIn2;
    wire [31:0] aluPlus = aluResult[31:0];
 
    // Use a single 33 bits subtract to do subtraction and all comparisons
@@ -228,7 +224,7 @@ module FemtoRV32(
    wire interrupt_return = isSYSTEM & funct3Is[0]; // & (instr[31:20]==12'h302);
 
    // CSRs:
-   reg  [ADDR_WIDTH-1:0] mepc;    // The saved program counter.
+   reg  [PC_WIDTH-1:0] mepc;    // The saved program counter.
    reg                   mstatus; // Interrupt enable
    reg                   mcause;  // Interrupt cause (and lock)
    reg  [31:0]           cycles;  // Cycle counter
@@ -241,11 +237,13 @@ module FemtoRV32(
    wire sel_cycles  = (instr[31:20] == 12'hC00);
 
    // Read CSRs:
+   /* verilator lint_off WIDTHEXPAND */
    wire [31:0] CSR_read =
      (sel_mstatus ? {28'b0, mstatus, 3'b0}  : 32'b0) |
      (sel_mepc    ? mepc                    : 32'b0) |
      (sel_mcause  ? {mcause, 31'b0}         : 32'b0) |
      (sel_cycles  ? cycles[31:0]            : 32'b0) ;
+   /* verilator lint_on WIDTHEXPAND */
 
    // Write CSRs: 5 bit unsigned immediate or content of RS1
    wire [31:0] CSR_modifier = instr[14] ? {27'd0, instr[19:15]} : rs1; 
@@ -278,7 +276,9 @@ module FemtoRV32(
    wire [PC_WIDTH-1:0] PCplus4 = PC + 4;
 
    // Branch address comes from the adder
-   wire [PC_WIDTH-1:0] PCplusImm = {aluPlus[PC_WIDTH-1:1],1'b0};
+   wire [PC_WIDTH-1:0] PCplusImm = PC + ( instr[3] ? Jimm[PC_WIDTH-1:0] :
+                                            instr[4] ? Uimm[PC_WIDTH-1:0] :
+                                                       Bimm[PC_WIDTH-1:0] );
 
    // Destination of load/store comes from the adder
    wire [ADDR_WIDTH-1:0] loadstore_addr = aluPlus[ADDR_WIDTH-1:0];
@@ -288,6 +288,7 @@ module FemtoRV32(
    // 32 bits, so we deactivate width test for mem_addr and writeBackData
 
    wire [PC_WIDTH-1:0] PC_new =
+      isJALR           ? {aluPlus[PC_WIDTH-1:1],1'b0} :
       interrupt        ? INT_ADDR  :
       interrupt_return ? mepc      :
       jumpToPCplusImm  ? PCplusImm :
@@ -305,7 +306,7 @@ module FemtoRV32(
       (isSYSTEM            ? CSR_read   : 32'b0) |  // SYSTEM
       (isLUI               ? Uimm       : 32'b0) |  // LUI
       (isALU               ? aluOut     : 32'b0) |  // ALUreg, ALUimm
-      (isAUIPC             ? aluPlus    : 32'b0) |  // AUIPC
+      (isAUIPC             ? PCplusImm  : 32'b0) |  // AUIPC
       (isJALR   | isJAL    ? PCplus4    : 32'b0) |  // JAL, JALR
       (isLoad              ? LOAD_data  : 32'b0) ;  // Load
 

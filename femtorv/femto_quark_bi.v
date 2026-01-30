@@ -58,7 +58,7 @@ module FemtoRV32(
    parameter RESET_ADDR       = 32'h08000000;
    parameter INT_ADDR         = 32'h00000000;
    parameter ADDR_WIDTH       = 32;
-   parameter PC_WIDTH         = 28;
+   parameter PC_WIDTH         = 32;
 
  /***************************************************************************/
  // Instruction decoding.
@@ -178,15 +178,20 @@ module FemtoRV32(
    //    (1 for ADD/SUB, 0 for ADDI, and Iimm used by ADDI overlaps bit 30 !)
    // - instr[30] is 1 for SRA (do sign extension) and 0 for SRL
 
-   wire [31:0] aluOut =
-     (funct3Is[0]  ? instr[30] & instr[5] ? aluMinus[31:0] : aluPlus : 32'b0) |
-     (funct3Is[1]  ? leftshift                                       : 32'b0) |
-     (funct3Is[2]  ? {31'b0, LT}                                     : 32'b0) |
-     (funct3Is[3]  ? {31'b0, LTU}                                    : 32'b0) |
-     (funct3Is[4]  ? aluIn1 ^ aluIn2                                 : 32'b0) |
-     (funct3Is[5]  ? shifter                                         : 32'b0) |
-     (funct3Is[6]  ? aluIn1 | aluIn2                                 : 32'b0) |
-     (funct3Is[7]  ? aluIn1 & aluIn2                                 : 32'b0) ;
+   reg [31:0] aluOut;
+   always @(*) begin
+      (* parallel_case *)
+      case(1'b1)
+      funct3Is[0]: aluOut = aluResult;
+      funct3Is[1]: aluOut = leftshift;
+      funct3Is[2]: aluOut = {31'b0, LT};
+      funct3Is[3]: aluOut = {31'b0, LTU};
+      funct3Is[4]: aluOut = aluIn1 ^ aluIn2;
+      funct3Is[5]: aluOut = shifter;
+      funct3Is[6]: aluOut = aluIn1 | aluIn2;
+      funct3Is[7]: aluOut = aluIn1 & aluIn2;
+      endcase
+   end
 
    /***************************************************************************/
    // The predicate for conditional branches.
@@ -224,12 +229,15 @@ module FemtoRV32(
    wire interrupt_return = isSYSTEM & funct3Is[0]; // & (instr[31:20]==12'h302);
 
    // CSRs:
-   reg  [PC_WIDTH-1:0] mepc;    // The saved program counter.
+   reg  [PC_WIDTH-1:0]   mepc;    // The saved program counter.
    reg                   mstatus; // Interrupt enable
    reg                   mcause;  // Interrupt cause (and lock)
    reg  [31:0]           cycles;  // Cycle counter
 
-   always @(posedge clk) cycles <= cycles + 1;
+   always @(posedge clk) begin
+      cycles[15:0] <= cycles[15:0] + 1;
+      if (cycles[15:0] == 16'hffff) cycles[31:16] <= cycles[31:16] + 1;
+   end
 
    wire sel_mstatus = (instr[31:20] == 12'h300);
    wire sel_mepc    = (instr[31:20] == 12'h341);

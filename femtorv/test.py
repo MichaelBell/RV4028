@@ -82,6 +82,37 @@ async def expect_read(dut, data, addr=None):
     await Timer(1, "ns")
     dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
 
+async def expect_read_hword(dut, data, addr=None, mask=0):
+    assert dut.wr_n.value == 1
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 0
+    
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == mask
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 0
+
+    if addr is None:
+        global last_addr
+        addr = dut.addr.value.to_unsigned()
+        last_addr = addr
+    else:
+        assert dut.addr.value == addr
+
+    await ClockCycles(dut.clk, 1, False)
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == mask
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 0
+
+    dut.data_in.value = data
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
+
 async def send_instr(dut, data, addr=None):
     await expect_read(dut, data, addr)
 
@@ -160,6 +191,56 @@ async def expect_write(dut, data, addr):
     await Timer(1, "ns")
     assert dut.data_oe.value == 0
 
+async def expect_write_hword(dut, data, addr, mask=0):
+
+    def check_data(val):
+        if mask == 0:
+            assert val == data
+        elif mask == 1:
+            assert (val & 0xff00) == ((data & 0xff) << 8)
+        elif mask == 2:
+            assert (val & 0xff) == (data & 0xff)
+        else:
+            assert False
+
+    assert dut.wr_n.value == 1
+    assert dut.msk_n.value == mask
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr
+    assert dut.data_oe.value == 0
+
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == mask
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.addr.value == addr
+    assert dut.data_oe.value == 0
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 0
+    assert dut.msk_n.value == mask
+    assert dut.mreq_n.value == 0
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    check_data(dut.data_out.value.to_unsigned())
+
+    await ClockCycles(dut.clk, 1, False)
+    await Timer(1, "ns")
+    assert dut.wr_n.value == 1
+    assert dut.mreq_n.value == 1
+    assert dut.rd_n.value == 1
+    assert dut.data_oe.value == 1
+    check_data(dut.data_out.value.to_unsigned())
+
+    await ClockCycles(dut.clk, 1, True)
+    await Timer(1, "ns")
+    assert dut.data_oe.value == 0
+
 async def load_reg(dut, reg, value):
     offset = random.randint(0, 0xFF) * 4
     instr = InstructionLW(reg, x0, offset).encode()
@@ -200,6 +281,126 @@ async def test_start(dut):
     await expect_read(dut, 0x12345678, 0x400334)
     await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
     await expect_write(dut, 0x12345678, 0x400334)
+
+@cocotb.test()
+async def test_mem(dut):
+    dut._log.info("Start")
+    
+    clock = Clock(dut.clk, 40, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    await reset(dut)
+
+    # ROM jumps to address 0
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode(), 0)
+
+    await send_instr(dut, InstructionADDI(x9, x0, 0x132).encode())
+    await send_instr(dut, InstructionLW(x16, gp, 0x334).encode())
+    await expect_read(dut, 0x12345678, 0x400334)
+
+    # Store hword
+    await send_instr(dut, InstructionSH(gp, x9, 0x234).encode())
+    await expect_write_hword(dut, 0x132, 0x400234)
+
+    # Load a value and store it again
+    await send_instr(dut, InstructionLH(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x1234, 0x400334)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x1234, 0x400334)
+    await send_instr(dut, InstructionLH(x16, gp, 0x336).encode())
+    await expect_read_hword(dut, 0x4321, 0x400336)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x4321, 0x400334)
+
+    # Store byte
+    await send_instr(dut, InstructionSB(gp, x9, 0x234).encode())
+    await expect_write_hword(dut, 0x32, 0x400234, 2)
+    await send_instr(dut, InstructionSB(gp, x9, 0x235).encode())
+    await expect_write_hword(dut, 0x32, 0x400234, 1)
+
+    # Load a value and store it again
+    await send_instr(dut, InstructionLB(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x1234, 0x400334, 2)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x34, 0x400334)
+    await send_instr(dut, InstructionLB(x16, gp, 0x335).encode())
+    await expect_read_hword(dut, 0x1234, 0x400334, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x12, 0x400334)
+    await send_instr(dut, InstructionLB(x16, gp, 0x336).encode())
+    await expect_read_hword(dut, 0x1234, 0x400336, 2)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x34, 0x400334)
+    await send_instr(dut, InstructionLB(x16, gp, 0x337).encode())
+    await expect_read_hword(dut, 0x1234, 0x400336, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x12, 0x400334)
+
+    # Test sign extension
+    await send_instr(dut, InstructionLB(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x12c4, 0x400334, 2)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0xffffffc4, 0x400334)
+    await send_instr(dut, InstructionLB(x16, gp, 0x335).encode())
+    await expect_read_hword(dut, 0x9234, 0x400334, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0xffffff92, 0x400334)
+    await send_instr(dut, InstructionLBU(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x12c4, 0x400334, 2)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0xc4, 0x400334)
+    await send_instr(dut, InstructionLBU(x16, gp, 0x335).encode())
+    await expect_read_hword(dut, 0x9234, 0x400334, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x92, 0x400334)
+    await send_instr(dut, InstructionLH(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x9234, 0x400334)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0xffff9234, 0x400334)
+    await send_instr(dut, InstructionLHU(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x9234, 0x400334)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x9234, 0x400334)
+
+@cocotb.test()
+async def test_branch(dut):
+    dut._log.info("Start")
+    
+    clock = Clock(dut.clk, 40, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    await reset(dut)
+
+    # ROM jumps to address 0
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode(), 0)
+
+    await send_instr(dut, InstructionADDI(a0, x0, 0x132).encode())
+    await send_instr(dut, InstructionADDI(a1, x0, 0x132).encode())
+    await send_instr(dut, InstructionADDI(a2, x0, 0x131).encode())
+    await send_instr(dut, InstructionADDI(a3, x0, 0x134).encode())
+
+    await send_instr(dut, InstructionBLT(a1, a0, 0x100).encode(), 0x14)
+    await send_instr(dut, InstructionBLT(a2, a0, 0x100).encode(), 0x18)
+    await send_instr(dut, InstructionBLT(a3, a0, 0x100).encode(), 0x118)
+    await send_instr(dut, InstructionBEQ(a1, a0, 0x100).encode(), 0x11c)
+    await send_instr(dut, InstructionBEQ(a2, a0, 0x100).encode(), 0x21c)
+    await send_instr(dut, InstructionBEQ(a3, a0, 0x100).encode(), 0x220)
+    await send_instr(dut, InstructionBGE(a1, a0, 0x100).encode(), 0x224)
+    await send_instr(dut, InstructionBGE(a2, a0, 0x100).encode(), 0x324)
+    await send_instr(dut, InstructionBGE(a3, a0, 0x100).encode(), 0x328)
+    await send_instr(dut, InstructionBNE(a1, a0, 0x100).encode(), 0x428)
+    await send_instr(dut, InstructionBNE(a2, a0, 0x100).encode(), 0x42c)
+    await send_instr(dut, InstructionBNE(a3, a0, 0x100).encode(), 0x52c)
+    await send_instr(dut, InstructionBLTU(a1, a0, 0x100).encode(), 0x62c)
+    await send_instr(dut, InstructionBLTU(a2, a0, 0x100).encode(), 0x630)
+    await send_instr(dut, InstructionBLTU(a3, a0, 0x100).encode(), 0x730)
+    await send_instr(dut, InstructionBGEU(a1, a0, 0x100).encode(), 0x734)
+    await send_instr(dut, InstructionBGEU(a2, a0, 0x100).encode(), 0x834)
+    await send_instr(dut, InstructionBGEU(a3, a0, 0x100).encode(), 0x838)
+
+    await send_instr(dut, InstructionNOP().encode(), 0x938)
 
 @cocotb.test()
 async def test_interrupt(dut):

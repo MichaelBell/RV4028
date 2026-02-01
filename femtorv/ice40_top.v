@@ -38,9 +38,14 @@ module ice40_top(
     wire [1:0] mreq_to_buffer;
     wire [1:0] wr_to_buffer;
 
+    reg [1:0] rst_sync = 2'b11;
+    always @(negedge clk) begin
+        rst_sync <= {rst_sync[0], rst_n};
+    end
+
     RV4028_femtorv i_rv4028(
         .clk(clk),
-        .rst_n(rst_n),
+        .rst_n(rst_sync[1]),
         .addr(addr_out),
         .wr_n(wr_to_buffer),
         .rd_n(rd_n),

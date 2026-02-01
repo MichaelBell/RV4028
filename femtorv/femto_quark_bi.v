@@ -281,6 +281,10 @@ module FemtoRV32(
    reg  [31:2] instr;        // Latched instruction. Note that bits 0 and 1 are
                              // ignored (not used in RV32I base instr set).
 
+`ifdef SIM
+   wire [31:0] debug_instr = {instr, 2'b11};
+`endif
+
    wire [PC_WIDTH-1:0] PCplus4 = PC + 4;
 
    // Branch address comes from the adder
@@ -406,8 +410,9 @@ module FemtoRV32(
    assign mem_wstrb = state[EXECUTE_bit] & isStore;
 
    // The mask for memory.
-   assign mem_mask = ((state[EXECUTE_bit] | state[WAIT_ALU_OR_MEM_bit]) && isMem) ? loadstore_mask : 4'b1111;
-   assign mem_half = isMem & !instr[13];
+   wire isActiveMem = ((state[EXECUTE_bit] | state[WAIT_ALU_OR_MEM_bit]) && isMem);
+   assign mem_mask = {4{~isActiveMem}} | loadstore_mask;
+   assign mem_half = isActiveMem & !instr[13];
 
    // Write on next cycle.
    assign mem_wnext = state[WAIT_INSTR_bit] & !mem_rbusy & (mem_rdata[6:2] == 5'b01000);

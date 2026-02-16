@@ -11,11 +11,11 @@ module ice40_top(
 
     inout [31:0] addr,   // Note low bit is always 0, addresses are 16-bit aligned.
 
-    output        wr_n,   // Write request
-    output        rd_n,   // Read request
-    output  [1:0] msk_n,  // Read/Write mask, low for bytes to be written
-    output        iorq_n, // Asserted if the top bit of the address is set
-    output        req_n,  // Asserted during bus transactions
+    inout        wr_n,   // Write request
+    inout        rd_n,   // Read request
+    inout  [1:0] msk_n,  // Read/Write mask, low for bytes to be written
+    inout        iorq_n, // Asserted if the top bit of the address is set
+    inout        req_n,  // Asserted during bus transactions
     input         wait_n, // Read not ready
     
     input         int_n,  // Interrupt - currently not supported
@@ -26,8 +26,6 @@ module ice40_top(
 
     inout         lo_addr_n,  // Asserted if addr[31:24] is 0
     input   [2:0] spare,
-    input         clk2,
-    input         rst2,
     output        led
 );
 
@@ -37,6 +35,9 @@ module ice40_top(
 
     wire [1:0] mreq_to_buffer;
     wire [1:0] wr_to_buffer;
+    wire       femto_rd_n;
+    wire [1:0] femto_msk_n;
+    wire       femto_iorq_n;
 
     reg [1:0] rst_sync = 2'b11;
     always @(negedge clk) begin
@@ -48,9 +49,9 @@ module ice40_top(
         .rst_n(rst_sync[1]),
         .addr(addr_out),
         .wr_n(wr_to_buffer),
-        .rd_n(rd_n),
-        .msk_n(msk_n),
-        .iorq_n(iorq_n),
+        .rd_n(femto_rd_n),
+        .msk_n(femto_msk_n),
+        .iorq_n(femto_iorq_n),
         .mreq_n(mreq_to_buffer),
         .wait_n(wait_n),
         .int_n(int_n),
@@ -71,7 +72,7 @@ module ice40_top(
 		.PACKAGE_PIN(wr_n),
         .OUTPUT_CLK(clk),
         .INPUT_CLK(clk),
-		.OUTPUT_ENABLE(1'b1),
+		.OUTPUT_ENABLE(busack_n),
 		.D_OUT_0(wr_to_buffer[0]),
         .D_OUT_1(wr_to_buffer[1])
 	);
@@ -83,12 +84,16 @@ module ice40_top(
 		.PACKAGE_PIN(req_n),
         .OUTPUT_CLK(clk),
         .INPUT_CLK(clk),
-		.OUTPUT_ENABLE(1'b1),
+		.OUTPUT_ENABLE(busack_n),
 		.D_OUT_0(mreq_to_buffer[0]),
         .D_OUT_1(mreq_to_buffer[1])
 	);
 
-    assign led = !rd_n;
-    assign lo_addr_n = busack_n ? ~|addr_out[31:25] : 1'bz;
+    assign rd_n      = busack_n ? femto_rd_n : 1'bz;
+    assign msk_n     = busack_n ? femto_msk_n : 2'bz;
+    assign iorq_n    = busack_n ? femto_iorq_n : 1'bz;
+    assign lo_addr_n = busack_n ? |addr_out[31:25] : 1'bz;
+
+    assign led = !femto_rd_n;
 
 endmodule

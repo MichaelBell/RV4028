@@ -6,8 +6,11 @@ OBJS += ice40_top.v rv4028.v femto_quark_bi.v rom.v
 
 all: ${TARGET}.bit
 
-$(TARGET).ys: $(OBJS)
-	yosys -p "scratchpad -set abc9.D 20000; synth_ice40 -abc9 -device hx -top ${TOP} -json $@" --autoidx 16 -DICE40 $(OBJS) > yosys.log
+rom.hex: rom_test.py
+	python3 rom_test.py
+
+$(TARGET).ys: $(OBJS) rom.hex
+	yosys -p "scratchpad -set abc9.D 20000; synth_ice40 -abc9 -device hx -top ${TOP} -json $@" --autoidx 9 -DICE40 $(OBJS) > yosys.log
 	@grep Warn yosys.log || true
 	@grep Error yosys.log || true
 	@egrep "[0-9]+ submodules" yosys.log | head -1
@@ -24,6 +27,9 @@ $(TARGET).asc: $(TARGET).ys
 
 $(TARGET).bit: $(TARGET).asc
 	icepack $< $@
+
+prog: $(TARGET).bit
+	mpremote a1 mount . + exec "import os; os.chdir('/'); import flash_prog; flash_prog.program('/remote/$(TARGET).bit'); flash_prog.release_pins()"
 
 clean:
 	rm -f *.bit *.asc *.ys *.log

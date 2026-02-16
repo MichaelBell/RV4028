@@ -66,9 +66,6 @@ set_io data[13] 91
 set_io data[14] 94
 set_io data[15] 96
 
-set_io clk2 33
-set_io rst2 34
-
 set_io spare[1] 89
 set_io spare[2] 90
 

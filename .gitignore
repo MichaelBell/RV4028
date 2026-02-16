@@ -1,5 +1,6 @@
 femtorv/sim_build/*
 femtorv/__pycache__/*
+femtorv/rom.hex
 *.ys
 *.asc
 *.bit

@@ -6,7 +6,7 @@ OBJS += ice40_top.v rv4028.v femto_quark_bi.v rom.v
 
 all: ${TARGET}.bit
 
-rom.hex: rom_test.py
+rom.hex: rom_test.py bootload.hex
 	python3 rom_test.py
 
 $(TARGET).ys: $(OBJS) rom.hex

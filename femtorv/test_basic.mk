@@ -12,6 +12,7 @@ PROJECT_SOURCES = rv4028.v femto_quark_bi.v rom.v
 SIM_BUILD				= sim_build/rtl
 VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 COMPILE_ARGS 		+= -DSIM
+COMPILE_ARGS 		+= -DINIT_FILE=\"sim_rom.hex\"
 
 # Allow sharing configuration between design and testbench via `include`:
 COMPILE_ARGS 		+= -I$(SRC_DIR)

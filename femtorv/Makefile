@@ -10,7 +10,7 @@ rom.hex: rom_test.py
 	python3 rom_test.py
 
 $(TARGET).ys: $(OBJS) rom.hex
-	yosys -p "scratchpad -set abc9.D 20000; synth_ice40 -abc9 -device hx -top ${TOP} -json $@" --autoidx 9 -DICE40 $(OBJS) > yosys.log
+	yosys -p "scratchpad -set abc9.D 20000; synth_ice40 -abc9 -device hx -top ${TOP} -json $@" --autoidx 10 -DICE40 $(OBJS) > yosys.log
 	@grep Warn yosys.log || true
 	@grep Error yosys.log || true
 	@egrep "[0-9]+ submodules" yosys.log | head -1

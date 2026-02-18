@@ -28,7 +28,7 @@ async def reset(dut):
         await ClockCycles(dut.clk, 1)
         await Timer(1, "ns")
 
-async def expect_read(dut, data, addr=None):
+async def expect_read(dut, data, addr=None, wait_cycles=0):
     assert dut.wr_n.value == 1
     assert dut.mreq_n.value == 1
     assert dut.rd_n.value == 0
@@ -46,6 +46,16 @@ async def expect_read(dut, data, addr=None):
         last_addr = addr
     else:
         assert dut.addr.value == addr
+
+    if wait_cycles > 0:
+        for _ in range(wait_cycles):
+            dut.wait_n.value = 0
+            await ClockCycles(dut.clk, 1, False)
+            assert dut.wr_n.value == 1
+            assert dut.msk_n.value == 0b00
+            assert dut.mreq_n.value == 0
+            assert dut.rd_n.value == 0
+        dut.wait_n.value = 1
 
     await ClockCycles(dut.clk, 1, False)
     assert dut.wr_n.value == 1
@@ -82,7 +92,7 @@ async def expect_read(dut, data, addr=None):
     await Timer(1, "ns")
     dut.data_in.value = LogicArray("ZZZZZZZZZZZZZZZZ")
 
-async def expect_read_hword(dut, data, addr=None, mask=0):
+async def expect_read_hword(dut, data, addr=None, mask=0, wait_cycles=0):
     assert dut.wr_n.value == 1
     assert dut.mreq_n.value == 1
     assert dut.rd_n.value == 0
@@ -100,6 +110,16 @@ async def expect_read_hword(dut, data, addr=None, mask=0):
         last_addr = addr
     else:
         assert dut.addr.value == addr
+
+    if wait_cycles > 0:
+        for _ in range(wait_cycles):
+            dut.wait_n.value = 0
+            await ClockCycles(dut.clk, 1, False)
+            assert dut.wr_n.value == 1
+            assert dut.msk_n.value == mask
+            assert dut.mreq_n.value == 0
+            assert dut.rd_n.value == 0
+        dut.wait_n.value = 1
 
     await ClockCycles(dut.clk, 1, False)
     assert dut.wr_n.value == 1
@@ -362,6 +382,43 @@ async def test_mem(dut):
     await expect_read_hword(dut, 0x9234, 0x400334)
     await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
     await expect_write(dut, 0x9234, 0x400334)
+
+@cocotb.test()
+async def test_wait(dut):
+    dut._log.info("Start")
+    
+    clock = Clock(dut.clk, 40, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    await reset(dut)
+
+    # ROM jumps to address 0
+    await send_instr(dut, InstructionLUI(gp, 0x400).encode(), 0)
+
+    # Load a value and store it again
+    await send_instr(dut, InstructionLW(x16, gp, 0x334).encode())
+    await expect_read(dut, 0x12345678, 0x400334, 3)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x12345678, 0x400334)
+
+    await send_instr(dut, InstructionLH(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x1234, 0x400334, 0, 7)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x1234, 0x400334)
+    await send_instr(dut, InstructionLH(x16, gp, 0x336).encode())
+    await expect_read_hword(dut, 0x4321, 0x400336, 0, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x4321, 0x400334)
+
+    await send_instr(dut, InstructionLB(x16, gp, 0x334).encode())
+    await expect_read_hword(dut, 0x1234, 0x400334, 2, 7)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x34, 0x400334)
+    await send_instr(dut, InstructionLB(x16, gp, 0x335).encode())
+    await expect_read_hword(dut, 0x4321, 0x400334, 1, 1)
+    await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
+    await expect_write(dut, 0x43, 0x400334)
 
 @cocotb.test()
 async def test_branch(dut):

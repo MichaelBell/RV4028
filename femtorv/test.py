@@ -8,7 +8,7 @@ from cocotb.types import LogicArray
 
 from riscvmodel.insn import *
 
-from riscvmodel.regnames import x0, x1, sp, gp, tp, a0, a1, a2, a3, a4, x9, x16
+from riscvmodel.regnames import x0, x1, sp, gp, tp, a0, a1, a2, a3, a4, x9, x10, x11, x12, x16
 from riscvmodel import csrnames
 from riscvmodel.variant import RV32I
 
@@ -382,6 +382,20 @@ async def test_mem(dut):
     await expect_read_hword(dut, 0x9234, 0x400334)
     await send_instr(dut, InstructionSW(gp, x16, 0x334).encode())
     await expect_write(dut, 0x9234, 0x400334)
+
+    # Store bytes
+    await send_instr(dut, InstructionADDI(x10, x0, 0x143).encode())
+    await send_instr(dut, InstructionADDI(x11, x0, 0x145).encode())
+    await send_instr(dut, InstructionADDI(x12, x0, 0x167).encode())
+    await send_instr(dut, InstructionSB(gp, x9, 0x234).encode())
+    await expect_write_hword(dut, 0x32, 0x400234, 2)
+    await send_instr(dut, InstructionSB(gp, x10, 0x236).encode())
+    await expect_write_hword(dut, 0x43, 0x400236, 2)
+    await send_instr(dut, InstructionSB(gp, x11, 0x238).encode())
+    await expect_write_hword(dut, 0x45, 0x400238, 2)
+    await send_instr(dut, InstructionSB(gp, x12, 0x23a).encode())
+    await expect_write_hword(dut, 0x67, 0x40023a, 2)
+
 
 @cocotb.test()
 async def test_wait(dut):
